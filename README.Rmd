@@ -1,0 +1,20 @@
+---
+title: "`bigwrig`: access bigWig files with R"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+`bigwrig` provides read access to bigWig files in R using `libBigWig` from @dpryan79. Data is read into an R `data_frame`.
+
+```{r eval = FALSE}
+library(bigwrig)
+
+url <- ''
+
+read_bigwig(url)
+
+read_bigwig_genome(url)
+```

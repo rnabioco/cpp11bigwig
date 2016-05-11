@@ -1,0 +1,21 @@
+# See Section 1.2.1 "Using 'Makevars'" of Writing R Extensions
+# cran.r-project.org/doc/manuals/R-exts.pdf
+
+# PKG_CPPFLAGS = -I./libBigWig
+PKG_LIBS = -lBigWig -L./libBigWig -Wl,-rpath,/usr/local/lib
+
+.PHONY: all libBigWig
+
+all: $(SHLIB)
+
+$(SHLIB): libBigWig
+
+libBigWig:
+	@(cd libBigWig; make install)
+
+shlib-clean: clean
+
+clean:
+	rm -f *.so *.o
+	@(cd libBigWig; make clean)
+
