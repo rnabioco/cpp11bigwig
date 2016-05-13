@@ -9,6 +9,7 @@
 #' @name bigwrig
 #'
 #' @import dplyr
+#'
 #' @useDynLib bigwrig
 #' @exportPattern "^[[:alpha:]]+"
 NULL
@@ -24,22 +25,11 @@ NULL
 #' @seealso \url{https://github.com/brentp/bw-python}
 #'
 #' @examples
+#' bw <- system.file('extdata', 'test.bw', package = 'bigwrig')
+#' read_bigwig(bw)
 #'
 #' @export
-read_bigwig <- function() {}
-
-#' @param bwfile filename or URL for bigWig file
-#'
-#' @return \code{data_frame}
-#'
-#' @export
-read_bigwig_genome <- function() {}
-
-
-
-
-
-
-
-
-
+read_bigwig <- function(bwfile, genome, chrom = '', start = -1, end = -1) {
+  res <- read_bigwig_impl(bwfile, chrom, start, end) %>% as_data_frame
+  res
+}

@@ -4,7 +4,7 @@
 \alias{read_bigwig}
 \title{Read data from bigWig files.}
 \usage{
-read_bigwig()
+read_bigwig(bwfile, genome, chrom = "", start = -1, end = -1)
 }
 \arguments{
 \item{bwfile}{filename or URL for bigWig file}
@@ -18,6 +18,8 @@ read_bigwig()
 Read data from bigWig files.
 }
 \examples{
+bw <- system.file('extdata', 'test.bw', package = 'bigwrig')
+read_bigwig(bw)
 
 }
 \seealso{
