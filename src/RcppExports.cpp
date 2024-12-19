@@ -12,7 +12,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // read_bigwig_impl
 DataFrame read_bigwig_impl(std::string bwfname, std::string chrom, int start, int end);
-RcppExport SEXP _bigwrig_read_bigwig_impl(SEXP bwfnameSEXP, SEXP chromSEXP, SEXP startSEXP, SEXP endSEXP) {
+RcppExport SEXP _bigwig_read_bigwig_impl(SEXP bwfnameSEXP, SEXP chromSEXP, SEXP startSEXP, SEXP endSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -26,11 +26,11 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_bigwrig_read_bigwig_impl", (DL_FUNC) &_bigwrig_read_bigwig_impl, 4},
+    {"_bigwig_read_bigwig_impl", (DL_FUNC) &_bigwig_read_bigwig_impl, 4},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_bigwrig(DllInfo *dll) {
+RcppExport void R_init_bigwig(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

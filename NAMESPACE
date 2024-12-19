@@ -2,5 +2,4 @@
 
 export(read_bigwig)
 exportPattern("^[[:alpha:]]+")
-import(dplyr)
-useDynLib(bigwrig)
+useDynLib(bigwig)

@@ -1,4 +1,4 @@
-Package: bigwrig
+Package: bigwig
 Type: Package
 Title: Read and Write bigWig Files.
 Version: 0.1.0
@@ -6,11 +6,12 @@ Authors@R: person("Jay", "Hesselberth", email = "first.last@example.com", role =
 Description: bigwrig wraps libBigWig by @dpryan79.
 License: MIT
 LazyData: TRUE
+Encoding: UTF-8
 LinkingTo: Rcpp
 Imports:
     Rcpp
-RoxygenNote: 5.0.1
-URL: http://rnabioco.github.io/RcppLibBigWig/
+RoxygenNote: 7.3.2
+URL: http://rnabioco.github.io/bigwig/
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

@@ -27,4 +27,3 @@ read_bigwig(bw)
 
 \url{https://github.com/brentp/bw-python}
 }
-

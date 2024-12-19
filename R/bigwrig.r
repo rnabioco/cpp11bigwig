@@ -1,18 +1,13 @@
-#' bigwrig: read data from bigWig files
+#' bigwig: read data from bigWig files
 #'
-#' bigwrig provides methods to read data from bigWig files. bigWrig uses
+#' bigwig provides methods to read data from bigWig files. bigwig uses
 #' Rcpp to wrap libBigWig from @@dpryan79.
 #'
 #' @author Jay Hesselberth <jay.hesselberth@gmail.com>
 #'
-#' @docType package
-#' @name bigwrig
-#'
-#' @import dplyr
-#'
-#' @useDynLib bigwrig
+#' @useDynLib bigwig
 #' @exportPattern "^[[:alpha:]]+"
-NULL
+"_PACKAGE"
 
 #' Read data from bigWig files.
 #'
