@@ -30,6 +30,6 @@ NULL
 #'
 #' @export
 read_bigwig <- function(bwfile, genome, chrom = '', start = -1, end = -1) {
-  res <- read_bigwig_impl(bwfile, chrom, start, end) %>% as_data_frame
+  res <- read_bigwig_impl(bwfile, chrom, start, end)
   res
 }
