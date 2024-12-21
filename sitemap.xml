@@ -1,10 +1,10 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
-<url><loc>http://rnabioco.github.io/RcppLibBigWig/404.html</loc></url>
-<url><loc>http://rnabioco.github.io/RcppLibBigWig/authors.html</loc></url>
-<url><loc>http://rnabioco.github.io/RcppLibBigWig/index.html</loc></url>
-<url><loc>http://rnabioco.github.io/RcppLibBigWig/reference/bigwig-package.html</loc></url>
-<url><loc>http://rnabioco.github.io/RcppLibBigWig/reference/hello.html</loc></url>
-<url><loc>http://rnabioco.github.io/RcppLibBigWig/reference/index.html</loc></url>
-<url><loc>http://rnabioco.github.io/RcppLibBigWig/reference/read_bigwig.html</loc></url>
+<url><loc>http://rnabioco.github.io/cpp11bigwig/404.html</loc></url>
+<url><loc>http://rnabioco.github.io/cpp11bigwig/authors.html</loc></url>
+<url><loc>http://rnabioco.github.io/cpp11bigwig/index.html</loc></url>
+<url><loc>http://rnabioco.github.io/cpp11bigwig/news/index.html</loc></url>
+<url><loc>http://rnabioco.github.io/cpp11bigwig/reference/cpp11bigwig-package.html</loc></url>
+<url><loc>http://rnabioco.github.io/cpp11bigwig/reference/index.html</loc></url>
+<url><loc>http://rnabioco.github.io/cpp11bigwig/reference/read_bigwig.html</loc></url>
 </urlset>
 
