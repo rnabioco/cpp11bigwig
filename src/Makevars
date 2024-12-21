@@ -1,10 +1,8 @@
-PKG_CPPFLAGS = -Wpointer-arith
-PKG_LIBS = libBigWig.a
+PKG_CPPFLAGS =
+PKG_LIBS = -lcurl libBigWig/libBigWig.a
 
-LIBBIGWIG_SOURCE_DIR=libbigwig
-LIBBIGWIG_MAKEFILE=libbigwig/Makefile
+LIBBIGWIG_SOURCE_DIR=libBigWig
+LIBBIGWIG_MAKEFILE=libBigWig/Makefile
 
 # libbigwig:
-# 	cd "${LIBBIGWIG_SOURCE_DIR}" && $(MAKE) -f "${LIBBIGWIG_MAKEFILE}"
-
-# all: libbigwig
+# 		cd "${LIBBIGWIG_SOURCE_DIR}" && $(MAKE) -f "${LIBBIGWIG_MAKEFILE}"
