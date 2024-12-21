@@ -1,4 +1,6 @@
-url: http://rnabioco.github.io/RcppLibBigWig/
+url: http://rnabioco.github.io/cpp11bigwig/
+
 template:
+  package: rbitemplate
   bootstrap: 5
 

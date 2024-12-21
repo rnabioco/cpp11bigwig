@@ -8,7 +8,7 @@
 
 //Returns -1 if there are no applicable levels, otherwise an integer indicating the most appropriate level.
 //Like Kent's library, this divides the desired bin size by 2 to minimize the effect of blocks overlapping multiple bins
-static int32_t determineZoomLevel(bigWigFile_t *fp, int basesPerBin) {
+static int32_t determineZoomLevel(const bigWigFile_t *fp, int basesPerBin) {
     int32_t out = -1;
     int64_t diff;
     uint32_t bestDiff = -1;
@@ -92,6 +92,7 @@ static struct vals_t *getVals(bigWigFile_t *fp, bwOverlapBlock_t *o, int i, uint
         if(rv != Z_OK) goto error;
     } else {
         buf = compBuf;
+        sz = o->size[i];
     }
 
     p = buf;
@@ -123,12 +124,12 @@ static struct vals_t *getVals(bigWigFile_t *fp, bwOverlapBlock_t *o, int i, uint
 
     free(v);
     free(buf);
-    free(compBuf);
+    if(compressed) free(compBuf);
     return vals;
 
 error:
     if(buf) free(buf);
-    if(compBuf) free(compBuf);
+    if(compBuf && compressed) free(compBuf);
     if(v) free(v);
     destroyVals_t(vals);
     return NULL;
@@ -372,8 +373,54 @@ static double intCoverage(bwOverlappingIntervals_t* ints, uint32_t start, uint32
     return o/(end-start);
 }
 
+static double blockSum(bigWigFile_t *fp, bwOverlapBlock_t *blocks, uint32_t tid, uint32_t start, uint32_t end) {
+    uint32_t i, j, sizeUse;
+    double o = 0.0;
+    struct vals_t *v = NULL;
+
+    if(!blocks->n) return strtod("NaN", NULL);
+
+    //Iterate over the blocks
+    for(i=0; i<blocks->n; i++) {
+        v = getVals(fp, blocks, i, tid, start, end);
+        if(!v) goto error;
+        for(j=0; j<v->n; j++) {
+            //Multiply the block average by min(bases covered, block overlap with interval)
+            sizeUse = v->vals[j]->scalar;
+            if(sizeUse > v->vals[j]->nBases) sizeUse = v->vals[j]->nBases;
+            o+= (v->vals[j]->sum * sizeUse) / v->vals[j]->nBases;
+        }
+        destroyVals_t(v);
+    }
+
+    if(o == 0.0) return strtod("NaN", NULL);
+    return o;
+
+error:
+    destroyVals_t(v);
+    errno = ENOMEM;
+    return strtod("NaN", NULL);
+}
+
+static double intSum(bwOverlappingIntervals_t* ints, uint32_t start, uint32_t end) {
+    uint32_t i, start_use, end_use;
+    double o = 0.0;
+
+    if(!ints->l) return strtod("NaN", NULL);
+
+    for(i=0; i<ints->l; i++) {
+        start_use = ints->start[i];
+        end_use = ints->end[i];
+        if(start_use < start) start_use = start;
+        if(end_use > end) end_use = end;
+        o += (end_use - start_use) * ints->value[i];
+    }
+
+    return o;
+}
+
 //Returns NULL on error, otherwise a double* that needs to be free()d
-double *bwStatsFromZoom(bigWigFile_t *fp, int32_t level, uint32_t tid, uint32_t start, uint32_t end, uint32_t nBins, enum bwStatsType type) {
+static double *bwStatsFromZoom(bigWigFile_t *fp, int32_t level, uint32_t tid, uint32_t start, uint32_t end, uint32_t nBins, enum bwStatsType type) {
     bwOverlapBlock_t *blocks = NULL;
     double *output = NULL;
     uint32_t pos = start, i, end2;
@@ -382,6 +429,7 @@ double *bwStatsFromZoom(bigWigFile_t *fp, int32_t level, uint32_t tid, uint32_t 
         fp->hdr->zoomHdrs->idx[level] = bwReadIndex(fp, fp->hdr->zoomHdrs->indexOffset[level]);
         if(!fp->hdr->zoomHdrs->idx[level]) return NULL;
     }
+    errno = 0; //Sometimes libCurls sets and then doesn't unset errno on errors
 
     output = malloc(sizeof(double)*nBins);
     if(!output) return NULL;
@@ -412,6 +460,10 @@ double *bwStatsFromZoom(bigWigFile_t *fp, int32_t level, uint32_t tid, uint32_t 
             //cov
             output[i] = blockCoverage(fp, blocks, tid, pos, end2)/(end2-pos);
             break;
+        case 5:
+            //sum
+            output[i] = blockSum(fp, blocks, tid, pos, end2);
+            break;
         default:
             goto error;
             break;
@@ -430,7 +482,7 @@ error:
     return NULL;
 }
 
-double *bwStatsFromFull(bigWigFile_t *fp, char *chrom, uint32_t start, uint32_t end, uint32_t nBins, enum bwStatsType type) {
+double *bwStatsFromFull(bigWigFile_t *fp, const char *chrom, uint32_t start, uint32_t end, uint32_t nBins, enum bwStatsType type) {
     bwOverlappingIntervals_t *ints = NULL;
     double *output = malloc(sizeof(double)*nBins);
     uint32_t i, pos = start, end2;
@@ -462,6 +514,9 @@ double *bwStatsFromFull(bigWigFile_t *fp, char *chrom, uint32_t start, uint32_t 
         case 4:
             output[i] = intCoverage(ints, pos, end2);
             break;
+        case 5:
+            output[i] = intSum(ints, pos, end2);
+            break;
         }
         bwDestroyOverlappingIntervals(ints);
         pos = end2;
@@ -472,7 +527,7 @@ double *bwStatsFromFull(bigWigFile_t *fp, char *chrom, uint32_t start, uint32_t 
 
 //Returns a list of floats of length nBins that must be free()d
 //On error, NULL is returned
-double *bwStats(bigWigFile_t *fp, char *chrom, uint32_t start, uint32_t end, uint32_t nBins, enum bwStatsType type) {
+double *bwStats(bigWigFile_t *fp, const char *chrom, uint32_t start, uint32_t end, uint32_t nBins, enum bwStatsType type) {
     int32_t level = determineZoomLevel(fp, ((double)(end-start))/((int) nBins));
     uint32_t tid = bwGetTid(fp, chrom);
     if(tid == (uint32_t) -1) return NULL;

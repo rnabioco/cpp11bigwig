@@ -2,4 +2,4 @@
 
 export(read_bigwig)
 exportPattern("^[[:alpha:]]+")
-useDynLib(bigwig)
+useDynLib(bigwig, .registration = TRUE)

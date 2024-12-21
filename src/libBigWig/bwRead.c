@@ -40,15 +40,19 @@ int bwInit(size_t defaultBufSize) {
     GLOBAL_DEFAULTBUFFERSIZE = defaultBufSize;
 
     //call curl_global_init()
+#ifndef NOCURL
     CURLcode rv;
     rv = curl_global_init(CURL_GLOBAL_ALL);
     if(rv != CURLE_OK) return 1;
+#endif
     return 0;
 }
 
 //This should be called before quiting, to release memory acquired by curl
 void bwCleanup() {
+#ifndef NOCURL
     curl_global_cleanup();
+#endif
 }
 
 static bwZoomHdr_t *bwReadZoomHdrs(bigWigFile_t *bw) {
@@ -69,7 +73,7 @@ static bwZoomHdr_t *bwReadZoomHdrs(bigWigFile_t *bw) {
         return NULL;
     }
     uint64_t *indexOffset = malloc(sizeof(uint64_t) * bw->hdr->nLevels);
-    if(!dataOffset) {
+    if(!indexOffset) {
         free(zhdr);
         free(level);
         free(dataOffset);
@@ -124,16 +128,15 @@ static void bwHdrRead(bigWigFile_t *bw) {
     if(!bw->hdr) return;
 
     if(bwRead((void*) &magic, sizeof(uint32_t), 1, bw) != 1) goto error; //0x0
-    if(magic != BIGWIG_MAGIC) goto error;
+    if(magic != BIGWIG_MAGIC && magic != BIGBED_MAGIC) goto error;
 
     if(bwRead((void*) &(bw->hdr->version), sizeof(uint16_t), 1, bw) != 1) goto error; //0x4
     if(bwRead((void*) &(bw->hdr->nLevels), sizeof(uint16_t), 1, bw) != 1) goto error; //0x6
     if(bwRead((void*) &(bw->hdr->ctOffset), sizeof(uint64_t), 1, bw) != 1) goto error; //0x8
     if(bwRead((void*) &(bw->hdr->dataOffset), sizeof(uint64_t), 1, bw) != 1) goto error; //0x10
     if(bwRead((void*) &(bw->hdr->indexOffset), sizeof(uint64_t), 1, bw) != 1) goto error; //0x18
-    //fieldCould and definedFieldCount aren't used
-    if(bwRead((void*) &magic, sizeof(uint32_t), 1, bw) != 1) goto error; //0x20
-    //These are used
+    if(bwRead((void*) &(bw->hdr->fieldCount), sizeof(uint16_t), 1, bw) != 1) goto error; //0x20
+    if(bwRead((void*) &(bw->hdr->definedFieldCount), sizeof(uint16_t), 1, bw) != 1) goto error; //0x22
     if(bwRead((void*) &(bw->hdr->sqlOffset), sizeof(uint64_t), 1, bw) != 1) goto error; //0x24
     if(bwRead((void*) &(bw->hdr->summaryOffset), sizeof(uint64_t), 1, bw) != 1) goto error; //0x2c
     if(bwRead((void*) &(bw->hdr->bufSize), sizeof(uint32_t), 1, bw) != 1) goto error; //0x34
@@ -153,6 +156,9 @@ static void bwHdrRead(bigWigFile_t *bw) {
         if(bwRead((void*) &(bw->hdr->sumData), sizeof(uint64_t), 1, bw) != 1) goto error;
         if(bwRead((void*) &(bw->hdr->sumSquared), sizeof(uint64_t), 1, bw) != 1) goto error;
     }
+
+    //In case of uncompressed remote files, let the IO functions know to request larger chunks
+    bw->URL->isCompressed = (bw->hdr->bufSize > 0)?1:0;
 
     return;
 
@@ -188,7 +194,7 @@ static uint64_t readChromLeaf(bigWigFile_t *bw, chromList_t *cl, uint32_t valueS
         if(bwRead((void*) chrom, sizeof(char), valueSize, bw) != valueSize) goto error;
         if(bwRead((void*) &idx, sizeof(uint32_t), 1, bw) != 1) goto error;
         if(bwRead((void*) &(cl->len[idx]), sizeof(uint32_t), 1, bw) != 1) goto error;
-        cl->chrom[idx] = strdup(chrom);
+        cl->chrom[idx] = bwStrdup(chrom);
         if(!(cl->chrom[idx])) goto error;
     }
 
@@ -234,7 +240,7 @@ static uint64_t readChromBlock(bigWigFile_t *bw, chromList_t *cl, uint32_t keySi
 static chromList_t *bwReadChromList(bigWigFile_t *bw) {
     chromList_t *cl = NULL;
     uint32_t magic, keySize, valueSize, itemsPerBlock;
-    uint64_t i, rv, itemCount;
+    uint64_t rv, itemCount;
     if(bw->isWrite) return NULL;
     if(bwSetPos(bw, bw->hdr->ctOffset)) return NULL;
 
@@ -246,7 +252,7 @@ static chromList_t *bwReadChromList(bigWigFile_t *bw) {
 
     if(bwRead((void*) &itemsPerBlock, sizeof(uint32_t), 1, bw) != 1) goto error;
     if(bwRead((void*) &keySize, sizeof(uint32_t), 1, bw) != 1) goto error;
-    if(bwRead((void*) &valueSize, sizeof(uint32_t), 1, bw) != 1) goto error; //Unused
+    if(bwRead((void*) &valueSize, sizeof(uint32_t), 1, bw) != 1) goto error;
     if(bwRead((void*) &itemCount, sizeof(uint64_t), 1, bw) != 1) goto error;
 
     cl->nKeys = itemCount;
@@ -255,16 +261,13 @@ static chromList_t *bwReadChromList(bigWigFile_t *bw) {
     if(!cl->chrom) goto error;
     if(!cl->len) goto error;
 
-    if(bwRead((void*) &magic, sizeof(uint32_t), 1, bw) != 1) goto error; //padding
-    if(bwRead((void*) &magic, sizeof(uint32_t), 1, bw) != 1) goto error; //padding
+    if(bwRead((void*) &magic, sizeof(uint32_t), 1, bw) != 1) goto error;
+    if(bwRead((void*) &magic, sizeof(uint32_t), 1, bw) != 1) goto error;
 
     //Read in the blocks
-    i = 0;
-    while(i<itemCount) {
-        rv = readChromBlock(bw, cl, keySize);
-        if(rv == (uint64_t) -1) goto error;
-        i += rv;
-    }
+    rv = readChromBlock(bw, cl, keySize);
+    if(rv == (uint64_t) -1) goto error;
+    if(rv != itemCount) goto error;
 
     return cl;
 
@@ -296,7 +299,50 @@ void bwClose(bigWigFile_t *fp) {
     free(fp);
 }
 
-bigWigFile_t *bwOpen(char *fname, CURLcode (*callBack) (CURL*), const char *mode) {
+int bwIsBigWig(const char *fname, CURLcode (*callBack) (CURL*)) {
+    uint32_t magic = 0;
+    URL_t *URL = NULL;
+
+    URL = urlOpen(fname, *callBack, NULL);
+
+    if(!URL) return 0;
+    if(urlRead(URL, (void*) &magic, sizeof(uint32_t)) != sizeof(uint32_t)) magic = 0;
+    urlClose(URL);
+    if(magic == BIGWIG_MAGIC) return 1;
+    return 0;
+}
+
+char *bbGetSQL(bigWigFile_t *fp) {
+    char *o = NULL;
+    uint64_t len;
+    if(!fp->hdr->sqlOffset) return NULL;
+    len = fp->hdr->summaryOffset - fp->hdr->sqlOffset; //This includes the NULL terminator
+    o = malloc(sizeof(char) * len);
+    if(!o) goto error;
+    if(bwSetPos(fp, fp->hdr->sqlOffset)) goto error;
+    if(bwRead((void*) o, len, 1, fp) != 1) goto error;
+    return o;
+
+error:
+    if(o) free(o);
+    printf("Got an error in bbGetSQL!\n");
+    return NULL;
+}
+
+int bbIsBigBed(const char *fname, CURLcode (*callBack) (CURL*)) {
+    uint32_t magic = 0;
+    URL_t *URL = NULL;
+
+    URL = urlOpen(fname, *callBack, NULL);
+
+    if(!URL) return 0;
+    if(urlRead(URL, (void*) &magic, sizeof(uint32_t)) != sizeof(uint32_t)) magic = 0;
+    urlClose(URL);
+    if(magic == BIGBED_MAGIC) return 1;
+    return 0;
+}
+
+bigWigFile_t *bwOpen(const char *fname, CURLcode (*callBack) (CURL*), const char *mode) {
     bigWigFile_t *bwg = calloc(1, sizeof(bigWigFile_t));
     if(!bwg) {
         fprintf(stderr, "[bwOpen] Couldn't allocate space to create the output object!\n");
@@ -305,20 +351,33 @@ bigWigFile_t *bwOpen(char *fname, CURLcode (*callBack) (CURL*), const char *mode
     if((!mode) || (strchr(mode, 'w') == NULL)) {
         bwg->isWrite = 0;
         bwg->URL = urlOpen(fname, *callBack, NULL);
-        if(!bwg->URL) goto error;
+        if(!bwg->URL) {
+            fprintf(stderr, "[bwOpen] urlOpen is NULL!\n");
+            goto error;
+        }
 
         //Attempt to read in the fixed header
         bwHdrRead(bwg);
-        if(!bwg->hdr) goto error;
+        if(!bwg->hdr) {
+            fprintf(stderr, "[bwOpen] bwg->hdr is NULL!\n");
+            goto error;
+        }
 
         //Read in the chromosome list
         bwg->cl = bwReadChromList(bwg);
-        if(!bwg->cl) goto error;
+        if(!bwg->cl) {
+            fprintf(stderr, "[bwOpen] bwg->cl is NULL (%s)!\n", fname);
+            goto error;
+        }
 
         //Read in the index
-        bwg->idx = bwReadIndex(bwg, 0);
-        if(!bwg->idx) goto error;
-
+        if(bwg->hdr->indexOffset) {
+            bwg->idx = bwReadIndex(bwg, 0);
+            if(!bwg->idx) {
+                fprintf(stderr, "[bwOpen] bwg->idx is NULL bwg->hdr->dataOffset 0x%"PRIx64"!\n", bwg->hdr->dataOffset);
+                goto error;
+            }
+        }
     } else {
         bwg->isWrite = 1;
         bwg->URL = urlOpen(fname, NULL, "w+");
@@ -333,4 +392,47 @@ bigWigFile_t *bwOpen(char *fname, CURLcode (*callBack) (CURL*), const char *mode
 error:
     bwClose(bwg);
     return NULL;
+}
+
+bigWigFile_t *bbOpen(const char *fname, CURLcode (*callBack) (CURL*)) {
+    bigWigFile_t *bb = calloc(1, sizeof(bigWigFile_t));
+    if(!bb) {
+        fprintf(stderr, "[bbOpen] Couldn't allocate space to create the output object!\n");
+        return NULL;
+    }
+
+    //Set the type to 1 for bigBed
+    bb->type = 1;
+
+    bb->URL = urlOpen(fname, *callBack, NULL);
+    if(!bb->URL) goto error;
+
+    //Attempt to read in the fixed header
+    bwHdrRead(bb);
+    if(!bb->hdr) goto error;
+
+    //Read in the chromosome list
+    bb->cl = bwReadChromList(bb);
+    if(!bb->cl) goto error;
+
+    //Read in the index
+    bb->idx = bwReadIndex(bb, 0);
+    if(!bb->idx) goto error;
+
+    return bb;
+
+error:
+    bwClose(bb);
+    return NULL;
+}
+
+
+//Implementation taken from musl:
+//https://git.musl-libc.org/cgit/musl/tree/src/string/strdup.c
+//License: https://git.musl-libc.org/cgit/musl/tree/COPYRIGHT
+char* bwStrdup(const char *s) {
+	size_t l = strlen(s);
+	char *d = malloc(l+1);
+	if (!d) return NULL;
+	return memcpy(d, s, l+1);
 }

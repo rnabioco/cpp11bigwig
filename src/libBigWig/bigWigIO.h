@@ -1,5 +1,19 @@
+#ifndef LIBBIGWIG_IO_H
+#define LIBBIGWIG_IO_H
+
+#ifndef NOCURL
 #include <curl/curl.h>
-/*! \file io.h
+#else
+#include <stdio.h>
+#ifndef CURLTYPE_DEFINED
+#define CURLTYPE_DEFINED
+typedef int CURLcode;
+typedef void CURL;
+#endif
+#define CURLE_OK 0
+#define CURLE_FAILED_INIT 1
+#endif
+/*! \file bigWigIO.h
  * These are (typically internal) IO functions, so there's generally no need for you to directly use them!
  */
 
@@ -23,7 +37,9 @@ enum bigWigFile_type_enum {
  */
 typedef struct {
     union {
+#ifndef NOCURL
         CURL *curl; /**<The CURL * file pointer for remote files.*/
+#endif
         FILE *fp; /**<The FILE * file pointer for local files.**/
     } x; /**<A union holding curl and fp.*/
     void *memBuf; /**<A void * pointing to memory of size bufSize.*/
@@ -32,7 +48,8 @@ typedef struct {
     size_t bufSize; /**<The size of the buffer.*/
     size_t bufLen; /**<The actual size of the buffer used.*/
     enum bigWigFile_type_enum type; /**<The connection type*/
-    char *fname; /**<Only needed for remote connections. The original URL/filename requested, since we need to make multiple connections.*/
+    int isCompressed; /**<1 if the file is compressed, otherwise 0*/
+    const char *fname; /**<Only needed for remote connections. The original URL/filename requested, since we need to make multiple connections.*/
 } URL_t;
 
 /*!
@@ -77,7 +94,7 @@ CURLcode urlSeek(URL_t *URL, size_t pos);
  *
  *  @return A URL_t * or NULL on error.
  */
-URL_t *urlOpen(char *fname, CURLcode (*callBack)(CURL*), const char* mode);
+URL_t *urlOpen(const char *fname, CURLcode (*callBack)(CURL*), const char* mode);
 
 /*!
  *  @brief Close a local/remote file
@@ -89,3 +106,5 @@ URL_t *urlOpen(char *fname, CURLcode (*callBack)(CURL*), const char* mode);
  *  @warning URL will no longer point to a valid location in memory!
  */
 void urlClose(URL_t *URL);
+
+#endif // LIBBIGWIG_IO_H

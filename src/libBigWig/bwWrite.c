@@ -19,7 +19,7 @@ struct val_t {
 
 //Create a chromList_t and attach it to a bigWigFile_t *. Returns NULL on error
 //Note that chroms and lengths are duplicated, so you MUST free the input
-chromList_t *bwCreateChromList(char **chroms, uint32_t *lengths, int64_t n) {
+chromList_t *bwCreateChromList(const char* const* chroms, const uint32_t *lengths, int64_t n) {
     int64_t i = 0;
     chromList_t *cl = calloc(1, sizeof(chromList_t));
     if(!cl) return NULL;
@@ -32,7 +32,7 @@ chromList_t *bwCreateChromList(char **chroms, uint32_t *lengths, int64_t n) {
 
     for(i=0; i<n; i++) {
         cl->len[i] = lengths[i];
-        cl->chrom[i] = strdup(chroms[i]);
+        cl->chrom[i] = bwStrdup(chroms[i]);
         if(!cl->chrom[i]) goto error;
     }
 
@@ -90,18 +90,24 @@ static int writeAtPos(void *ptr, size_t sz, size_t nmemb, size_t pos, FILE *fp) 
     return 0;
 }
 
-//Are nblocks and nperblock correct?
 //We lose keySize bytes on error
 static int writeChromList(FILE *fp, chromList_t *cl) {
     uint16_t k;
     uint32_t j, magic = CIRTREE_MAGIC;
-    uint32_t nperblock = (cl->nKeys>0xFFFF)?-1:cl->nKeys; //Items per leaf/non-leaf
-    uint32_t nblocks = (cl->nKeys>>16)+1, keySize = 0, valSize = 8; //does the valSize even matter? I ignore it...
-    uint64_t i, written = 0;
+    uint32_t nperblock = (cl->nKeys > 0x7FFF) ? 0x7FFF : cl->nKeys; //Items per leaf/non-leaf, there are no unsigned ints in java :(
+    uint32_t nblocks, keySize = 0, valSize = 8; //In theory valSize could be optimized, in practice that'd be annoying
+    uint64_t i, nonLeafEnd, leafSize, nextLeaf;
     uint8_t eight;
     int64_t i64;
     char *chrom;
     size_t l;
+
+    if(cl->nKeys > 1073676289) {
+        fprintf(stderr, "[writeChromList] Error: Currently only 1,073,676,289 contigs are supported. If you really need more then please post a request on github.\n");
+        return 1;
+    }
+    nblocks = cl->nKeys/nperblock;
+    nblocks += ((cl->nKeys % nperblock) > 0)?1:0;
 
     for(i64=0; i64<cl->nKeys; i64++) {
         l = strlen(cl->chrom[i64]);
@@ -122,32 +128,53 @@ static int writeChromList(FILE *fp, chromList_t *cl) {
     if(fwrite(&i, sizeof(uint64_t), 1, fp) != 1) return 6;
 
     //Do we need a non-leaf node?
-    if(nblocks>1) {
+    if(nblocks > 1) {
         eight = 0;
         if(fwrite(&eight, sizeof(uint8_t), 1, fp) != 1) return 7;
         if(fwrite(&eight, sizeof(uint8_t), 1, fp) != 1) return 8; //padding
-        j = 0;
-        for(i=0; i<nperblock; i++) { //Why yes, this is pointless
+        if(fwrite(&nblocks, sizeof(uint16_t), 1, fp) != 1) return 8;
+        nonLeafEnd = ftell(fp) + nperblock * (keySize + 8);
+        leafSize = nperblock * (keySize + 8) + 4;
+        for(i=0; i<nblocks; i++) { //Why yes, this is pointless
+            chrom = strncpy(chrom, cl->chrom[i * nperblock], keySize);
+            nextLeaf = nonLeafEnd + i * leafSize;
             if(fwrite(chrom, keySize, 1, fp) != 1) return 9;
-            if(fwrite(&j, sizeof(uint64_t), 1, fp) != 1) return 10;
+            if(fwrite(&nextLeaf, sizeof(uint64_t), 1, fp) != 1) return 10;
+        }
+        for(i=0; i<keySize; i++) chrom[i] = '\0';
+        nextLeaf = 0;
+        for(i=nblocks; i<nperblock; i++) {
+            if(fwrite(chrom, keySize, 1, fp) != 1) return 9;
+            if(fwrite(&nextLeaf, sizeof(uint64_t), 1, fp) != 1) return 10;
         }
     }
 
     //Write the leaves
+    nextLeaf = 0;
     for(i=0, j=0; i<nblocks; i++) {
         eight = 1;
         if(fwrite(&eight, sizeof(uint8_t), 1, fp) != 1) return 11;
         eight = 0;
         if(fwrite(&eight, sizeof(uint8_t), 1, fp) != 1) return 12;
-        if(cl->nKeys - written < nperblock) nperblock = cl->nKeys - written;
-        if(fwrite(&nperblock, sizeof(uint16_t), 1, fp) != 1) return 13;
+        if(cl->nKeys - j < nperblock) {
+            k = cl->nKeys - j;
+            if(fwrite(&k, sizeof(uint16_t), 1, fp) != 1) return 13;
+        } else {
+            if(fwrite(&nperblock, sizeof(uint16_t), 1, fp) != 1) return 13;
+        }
         for(k=0; k<nperblock; k++) {
-            if(j>=cl->nKeys) return 14;
-            chrom = strncpy(chrom, cl->chrom[j], keySize);
-            if(fwrite(chrom, keySize, 1, fp) != 1) return 15;
-            if(fwrite(&j, sizeof(uint32_t), 1, fp) != 1) return 16;
-            if(fwrite(&(cl->len[j++]), sizeof(uint32_t), 1, fp) != 1) return 17;
-            written++;
+            if(j>=cl->nKeys) {
+                if(chrom[0]) {
+                    for(l=0; l<keySize; l++) chrom[l] = '\0';
+                }
+                if(fwrite(chrom, keySize, 1, fp) != 1) return 15;
+                if(fwrite(&nextLeaf, sizeof(uint64_t), 1, fp) != 1) return 16;
+            } else {
+                chrom = strncpy(chrom, cl->chrom[j], keySize);
+                if(fwrite(chrom, keySize, 1, fp) != 1) return 15;
+                if(fwrite(&j, sizeof(uint32_t), 1, fp) != 1) return 16;
+                if(fwrite(&(cl->len[j++]), sizeof(uint32_t), 1, fp) != 1) return 17;
+            }
         }
     }
 
@@ -161,7 +188,8 @@ int bwWriteHdr(bigWigFile_t *bw) {
     uint32_t magic = BIGWIG_MAGIC;
     uint16_t two = 4;
     FILE *fp;
-    void *p = calloc(58, sizeof(uint8_t)); //58 bytes of nothing
+    const uint8_t pbuff[58] = {0}; // 58 bytes of nothing
+    const void *p = (const void *)&pbuff;
     if(!bw->isWrite) return 1;
 
     //The header itself, largely just reserving space...
@@ -196,7 +224,6 @@ int bwWriteHdr(bigWigFile_t *bw) {
     //Save space for the number of blocks
     if(fwrite(p, sizeof(uint8_t), 8, fp) != 8) return 13;
 
-    free(p);
     return 0;
 }
 
@@ -344,9 +371,9 @@ static void updateStats(bigWigFile_t *fp, uint32_t span, float val) {
 }
 
 //12 bytes per entry
-int bwAddIntervals(bigWigFile_t *fp, char **chrom, uint32_t *start, uint32_t *end, float *values, uint32_t n) {
+int bwAddIntervals(bigWigFile_t *fp, const char* const* chrom, const uint32_t *start, const uint32_t *end, const float *values, uint32_t n) {
     uint32_t tid = 0, i;
-    char *lastChrom = NULL;
+    const char *lastChrom = NULL;
     bwWriteBuffer_t *wb = fp->writeBuffer;
     if(!n) return 0; //Not an error per se
     if(!fp->isWrite) return 1;
@@ -404,7 +431,7 @@ int bwAddIntervals(bigWigFile_t *fp, char **chrom, uint32_t *start, uint32_t *en
     return 0;
 }
 
-int bwAppendIntervals(bigWigFile_t *fp, uint32_t *start, uint32_t *end, float *values, uint32_t n) {
+int bwAppendIntervals(bigWigFile_t *fp, const uint32_t *start, const uint32_t *end, const float *values, uint32_t n) {
     uint32_t i;
     bwWriteBuffer_t *wb = fp->writeBuffer;
     if(!n) return 0;
@@ -432,7 +459,7 @@ int bwAppendIntervals(bigWigFile_t *fp, uint32_t *start, uint32_t *end, float *v
 }
 
 //8 bytes per entry
-int bwAddIntervalSpans(bigWigFile_t *fp, char *chrom, uint32_t *start, uint32_t span, float *values, uint32_t n) {
+int bwAddIntervalSpans(bigWigFile_t *fp, const char *chrom, const uint32_t *start, uint32_t span, const float *values, uint32_t n) {
     uint32_t i, tid;
     bwWriteBuffer_t *wb = fp->writeBuffer;
     if(!n) return 0;
@@ -465,7 +492,7 @@ int bwAddIntervalSpans(bigWigFile_t *fp, char *chrom, uint32_t *start, uint32_t 
     return 0;
 }
 
-int bwAppendIntervalSpans(bigWigFile_t *fp, uint32_t *start, float *values, uint32_t n) {
+int bwAppendIntervalSpans(bigWigFile_t *fp, const uint32_t *start, const float *values, uint32_t n) {
     uint32_t i;
     bwWriteBuffer_t *wb = fp->writeBuffer;
     if(!n) return 0;
@@ -490,7 +517,7 @@ int bwAppendIntervalSpans(bigWigFile_t *fp, uint32_t *start, float *values, uint
 }
 
 //4 bytes per entry
-int bwAddIntervalSpanSteps(bigWigFile_t *fp, char *chrom, uint32_t start, uint32_t span, uint32_t step, float *values, uint32_t n) {
+int bwAddIntervalSpanSteps(bigWigFile_t *fp, const char *chrom, uint32_t start, uint32_t span, uint32_t step, const float *values, uint32_t n) {
     uint32_t i, tid;
     bwWriteBuffer_t *wb = fp->writeBuffer;
     if(!n) return 0;
@@ -522,7 +549,7 @@ int bwAddIntervalSpanSteps(bigWigFile_t *fp, char *chrom, uint32_t start, uint32
     return 0;
 }
 
-int bwAppendIntervalSpanSteps(bigWigFile_t *fp, float *values, uint32_t n) {
+int bwAppendIntervalSpanSteps(bigWigFile_t *fp, const float *values, uint32_t n) {
     uint32_t i;
     bwWriteBuffer_t *wb = fp->writeBuffer;
     if(!n) return 0;
@@ -709,7 +736,7 @@ int writeIndex(bigWigFile_t *fp) {
     bwLL *ll = fp->writeBuffer->firstIndexNode, *p;
     bwRTreeNode_t *root = NULL;
 
-    if(!fp->writeBuffer->nBlocks) return 1;
+    if(!fp->writeBuffer->nBlocks) return 0;
     fp->idx = malloc(sizeof(bwRTree_t));
     if(!fp->idx) return 2;
     fp->idx->root = root;
@@ -780,7 +807,7 @@ int writeIndex(bigWigFile_t *fp) {
 //This may or may not produce the requested number of zoom levels
 int makeZoomLevels(bigWigFile_t *fp) {
     uint32_t meanBinSize, i;
-    uint32_t multiplier = 4, zoom = 10;
+    uint32_t multiplier = 4, zoom = 10, maxZoom = 0;
     uint16_t nLevels = 0;
 
     meanBinSize = ((double) fp->writeBuffer->runningWidthSum)/(fp->writeBuffer->nEntries);
@@ -801,7 +828,15 @@ int makeZoomLevels(bigWigFile_t *fp) {
     if(!fp->hdr->zoomHdrs->indexOffset) return 4;
     if(!fp->hdr->zoomHdrs->idx) return 5;
 
+    //There's no point in having a zoom level larger than the largest chromosome
+    //This will none the less allow at least one zoom level, which is generally needed for IGV et al.
+    for(i=0; i<fp->cl->nKeys; i++) {
+        if(fp->cl->len[i] > maxZoom) maxZoom = fp->cl->len[i];
+    }
+    if(zoom > maxZoom) zoom = maxZoom;
+
     for(i=0; i<fp->hdr->nLevels; i++) {
+        if(zoom > maxZoom) break; //prevent absurdly large zoom levels
         fp->hdr->zoomHdrs->level[i] = zoom;
         nLevels++;
         if(((uint32_t)-1)/multiplier < zoom) break;
@@ -887,6 +922,10 @@ uint32_t updateInterval(bigWigFile_t *fp, bwZoomBuffer_t *buffer, double *sum, d
     uint32_t rv = 0, offset = 0;
     if(!buffer) return 0;
     if(buffer->l+32 >= buffer->m) return 0;
+
+    //Make sure that we don't overflow a uint32_t by adding some huge value to start
+    if(start + size < start) size = ((uint32_t) -1) - start;
+
     if(buffer->l) {
         offset = buffer->l/32;
     } else {
@@ -980,7 +1019,7 @@ error:
 
 //Get all of the intervals and add them to the appropriate zoomBuffer
 int constructZoomLevels(bigWigFile_t *fp) {
-    bwOverlappingIntervals_t *intervals = NULL;
+    bwOverlapIterator_t *it = NULL;
     double *sum = NULL, *sumsq = NULL;
     uint32_t i, j, k;
 
@@ -989,15 +1028,19 @@ int constructZoomLevels(bigWigFile_t *fp) {
     if(!sum || !sumsq) goto error;
 
     for(i=0; i<fp->cl->nKeys; i++) {
-        intervals = bwGetOverlappingIntervals(fp, fp->cl->chrom[i], 0, fp->cl->len[i]);
-        if(!intervals) goto error;
-        for(j=0; j<intervals->l; j++) {
-            for(k=0; k<fp->hdr->nLevels; k++) {
-                if(addIntervalValue(fp, &(fp->writeBuffer->nNodes[k]), sum+k, sumsq+k, fp->writeBuffer->lastZoomBuffer[k], fp->hdr->bufSize/32, fp->hdr->zoomHdrs->level[k], i, intervals->start[j], intervals->end[j], intervals->value[j])) goto error;
-                while(fp->writeBuffer->lastZoomBuffer[k]->next) fp->writeBuffer->lastZoomBuffer[k] = fp->writeBuffer->lastZoomBuffer[k]->next;
-            }
-        }
-        bwDestroyOverlappingIntervals(intervals);
+        it = bwOverlappingIntervalsIterator(fp, fp->cl->chrom[i], 0, fp->cl->len[i], 100000);
+        if(!it) goto error;
+	while(it->data != NULL){
+	  for(j=0;j<it->intervals->l;j++){
+		for(k=0;k<fp->hdr->nLevels;k++){
+			if(addIntervalValue(fp, &(fp->writeBuffer->nNodes[k]), sum+k, sumsq+k, fp->writeBuffer->lastZoomBuffer[k], fp->hdr->bufSize/32, fp->hdr->zoomHdrs->level[k], i, it->intervals->start[j], it->intervals->end[j], it->intervals->value[j])) goto error;
+			while(fp->writeBuffer->lastZoomBuffer[k]->next) fp->writeBuffer->lastZoomBuffer[k] = fp->writeBuffer->lastZoomBuffer[k]->next;
+		}
+	  }
+	  it = bwIteratorNext(it);
+	}
+	bwIteratorDestroy(it);
+
     }
 
     //Make an index for each zoom level
@@ -1007,13 +1050,14 @@ int constructZoomLevels(bigWigFile_t *fp) {
         fp->hdr->zoomHdrs->idx[i]->blockSize = fp->writeBuffer->blockSize;
     }
 
+
     free(sum);
     free(sumsq);
 
     return 0;
 
 error:
-    if(intervals) bwDestroyOverlappingIntervals(intervals);
+    if(it) bwIteratorDestroy(it);
     if(sum) free(sum);
     if(sumsq) free(sumsq);
     return 1;
@@ -1210,7 +1254,7 @@ int bwFinalize(bigWigFile_t *fp) {
     if(writeIndex(fp)) return 4;
 
     //Zoom level stuff here?
-    if(fp->hdr->nLevels) {
+    if(fp->hdr->nLevels && fp->writeBuffer->nBlocks) {
         offset = bwTell(fp);
         if(makeZoomLevels(fp)) return 5;
         if(constructZoomLevels(fp)) return 6;

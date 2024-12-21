@@ -1,10 +1,11 @@
-#include <Rcpp.h>
-using namespace Rcpp ;
+#include <cpp11.hpp>
+#include <cpp11/data_frame.hpp>
+using namespace cpp11;
 
-#include "bigWig.h"
+#include "libBigWig/bigWig.h"
 
-//[[Rcpp::export]]
-DataFrame read_bigwig_impl(std::string bwfname, std::string chrom, int start, int end) {
+[[cpp11::register]]
+cpp11::writable::data_frame read_bigwig_impl(std::string bwfname, std::string chrom, int start, int end) {
 
   //http://stackoverflow.com/questions/347949/how-to-convert-a-stdstring-to-const-char-or-char
   std::vector<char> bwfile(bwfname.begin(), bwfname.end()) ;
@@ -61,10 +62,13 @@ DataFrame read_bigwig_impl(std::string bwfname, std::string chrom, int start, in
     bwDestroyOverlappingIntervals(intervals) ;
   }
 
-  return DataFrame::create( Named("chrom") = chroms,
-                            Named("start") = starts,
-                            Named("end") = ends,
-                            Named("value") = vals) ;
+  return writable::data_frame({
+    "chrom"_nm = chroms,
+    "start"_nm = starts,
+    "end"_nm = ends,
+    "value"_nm = vals
+  }) ;
+
 }
 
 /***R

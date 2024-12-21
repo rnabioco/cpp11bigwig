@@ -1,8 +1,10 @@
 #include "bigWig.h"
 #include "bwCommon.h"
 #include <stdlib.h>
+#include <math.h>
 #include <string.h>
 #include <zlib.h>
+#include <errno.h>
 
 static uint32_t roundup(uint32_t v) {
     v--;
@@ -32,7 +34,7 @@ static bwRTree_t *readRTreeIdx(bigWigFile_t *fp, uint64_t offset) {
         return NULL;
     }
 
-    node = malloc(sizeof(bwRTree_t));
+    node = calloc(1, sizeof(bwRTree_t));
     if(!node) return NULL;
 
     if(bwRead(&(node->blockSize), sizeof(uint32_t), 1, fp) != 1) goto error;
@@ -46,6 +48,9 @@ static bwRTree_t *readRTreeIdx(bigWigFile_t *fp, uint64_t offset) {
     //Padding
     if(bwRead(&(node->blockSize), sizeof(uint32_t), 1, fp) != 1) goto error;
     node->rootOffset = bwTell(fp);
+
+    //For remote files, libCurl sometimes sets errno to 115 and doesn't clear it
+    errno = 0;
 
     return node;
 
@@ -135,7 +140,7 @@ static bwOverlapBlock_t *overlapsLeaf(bwRTreeNode_t *node, uint32_t tid, uint32_
 
         /*
           The individual blocks can theoretically span multiple contigs.
-          So if we treat the first/last contig in the range as special 
+          So if we treat the first/last contig in the range as special
           but anything in the middle is a guaranteed match
         */
         if(node->chrIdxStart[i] != node->chrIdxEnd[i]) {
@@ -276,7 +281,7 @@ bwOverlapBlock_t *walkRTreeNodes(bigWigFile_t *bw, bwRTreeNode_t *root, uint32_t
 
 //In reality, a hash or some sort of tree structure is probably faster...
 //Return -1 (AKA 0xFFFFFFFF...) on "not there", so we can hold (2^32)-1 items.
-uint32_t bwGetTid(bigWigFile_t *fp, char *chrom) {
+uint32_t bwGetTid(const bigWigFile_t *fp, const char *chrom) {
     uint32_t i;
     if(!chrom) return -1;
     for(i=0; i<fp->cl->nKeys; i++) {
@@ -285,7 +290,7 @@ uint32_t bwGetTid(bigWigFile_t *fp, char *chrom) {
     return -1;
 }
 
-static bwOverlapBlock_t *bwGetOverlappingBlocks(bigWigFile_t *fp, char *chrom, uint32_t start, uint32_t end) {
+static bwOverlapBlock_t *bwGetOverlappingBlocks(bigWigFile_t *fp, const char *chrom, uint32_t start, uint32_t end) {
     uint32_t tid = bwGetTid(fp, chrom);
 
     if(tid == (uint32_t) -1) {
@@ -325,6 +330,20 @@ void bwDestroyOverlappingIntervals(bwOverlappingIntervals_t *o) {
     free(o);
 }
 
+void bbDestroyOverlappingEntries(bbOverlappingEntries_t *o) {
+    uint32_t i;
+    if(!o) return;
+    if(o->start) free(o->start);
+    if(o->end) free(o->end);
+    if(o->str) {
+        for(i=0; i<o->l; i++) {
+            if(o->str[i]) free(o->str[i]);
+        }
+        free(o->str);
+    }
+    free(o);
+}
+
 //Returns NULL on error, in which case o has been free()d
 static bwOverlappingIntervals_t *pushIntervals(bwOverlappingIntervals_t *o, uint32_t start, uint32_t end, float value) {
     if(o->l+1 >= o->m) {
@@ -343,6 +362,29 @@ static bwOverlappingIntervals_t *pushIntervals(bwOverlappingIntervals_t *o, uint
 
 error:
     bwDestroyOverlappingIntervals(o);
+    return NULL;
+}
+
+static bbOverlappingEntries_t *pushBBIntervals(bbOverlappingEntries_t *o, uint32_t start, uint32_t end, char *str, int withString) {
+    if(o->l+1 >= o->m) {
+        o->m = roundup(o->l+1);
+        o->start = realloc(o->start, o->m * sizeof(uint32_t));
+        if(!o->start) goto error;
+        o->end = realloc(o->end, o->m * sizeof(uint32_t));
+        if(!o->end) goto error;
+        if(withString) {
+            o->str = realloc(o->str, o->m * sizeof(char**));
+            if(!o->str) goto error;
+        }
+    }
+    o->start[o->l] = start;
+    o->end[o->l] = end;
+    if(withString) o->str[o->l] = bwStrdup(str);
+    o->l++;
+    return o;
+
+error:
+    bbDestroyOverlappingEntries(o);
     return NULL;
 }
 
@@ -395,7 +437,7 @@ bwOverlappingIntervals_t *bwGetOverlappingIntervalsCore(bigWigFile_t *fp, bwOver
         if(hdr.tid != tid) continue;
 
         if(hdr.type == 3) start = hdr.start - hdr.step;
-        
+
         //FIXME: We should ensure that sz is large enough to hold nItems of the given type
         for(j=0; j<hdr.nItems; j++) {
             switch(hdr.type) {
@@ -443,8 +485,82 @@ error:
     return NULL;
 }
 
+bbOverlappingEntries_t *bbGetOverlappingEntriesCore(bigWigFile_t *fp, bwOverlapBlock_t *o, uint32_t tid, uint32_t ostart, uint32_t oend, int withString) {
+    uint64_t i;
+    int compressed = 0, rv, slen;
+    uLongf sz = fp->hdr->bufSize, tmp = 0;
+    void *buf = NULL, *bufEnd = NULL, *compBuf = NULL;
+    uint32_t entryTid = 0, start = 0, end;
+    char *str;
+    bbOverlappingEntries_t *output = calloc(1, sizeof(bbOverlappingEntries_t));
+
+    if(!output) goto error;
+
+    if(!o) return output;
+    if(!o->n) return output;
+
+    if(sz) {
+        compressed = 1;
+        buf = malloc(sz);
+    }
+    sz = 0; //This is now the size of the compressed buffer
+
+    for(i=0; i<o->n; i++) {
+        if(bwSetPos(fp, o->offset[i])) goto error;
+
+        if(sz < o->size[i]) {
+            compBuf = realloc(compBuf, o->size[i]);
+            sz = o->size[i];
+        }
+        if(!compBuf) goto error;
+
+        if(bwRead(compBuf, o->size[i], 1, fp) != 1) goto error;
+        if(compressed) {
+            tmp = fp->hdr->bufSize; //This gets over-written by uncompress
+            rv = uncompress(buf, (uLongf *) &tmp, compBuf, o->size[i]);
+            if(rv != Z_OK) goto error;
+        } else {
+            buf = compBuf;
+            tmp = o->size[i]; //TODO: Is this correct? Do non-gzipped bigBeds exist?
+        }
+
+        bufEnd = buf + tmp;
+        while(buf < bufEnd) {
+            entryTid = ((uint32_t*)buf)[0];
+            start = ((uint32_t*)buf)[1];
+            end = ((uint32_t*)buf)[2];
+            buf += 12;
+            str = (char*)buf;
+            slen = strlen(str) + 1;
+            buf += slen;
+
+            if(entryTid < tid) continue;
+            if(entryTid > tid) break;
+            if(end <= ostart) continue;
+            if(start >= oend) break;
+
+            //Push the overlap
+            if(!pushBBIntervals(output, start, end, str, withString)) goto error;
+        }
+
+        buf = bufEnd - tmp; //reset the buffer pointer
+    }
+
+    if(compressed && buf) free(buf);
+    if(compBuf) free(compBuf);
+    return output;
+
+error:
+    fprintf(stderr, "[bbGetOverlappingEntriesCore] Got an error\n");
+    buf = bufEnd - tmp;
+    if(output) bbDestroyOverlappingEntries(output);
+    if(compressed && buf) free(buf);
+    if(compBuf) free(compBuf);
+    return NULL;
+}
+
 //Returns NULL on error OR no intervals, which is a bad design...
-bwOverlappingIntervals_t *bwGetOverlappingIntervals(bigWigFile_t *fp, char *chrom, uint32_t start, uint32_t end) {
+bwOverlappingIntervals_t *bwGetOverlappingIntervals(bigWigFile_t *fp, const char *chrom, uint32_t start, uint32_t end) {
     bwOverlappingIntervals_t *output;
     uint32_t tid = bwGetTid(fp, chrom);
     if(tid == (uint32_t) -1) return NULL;
@@ -455,11 +571,146 @@ bwOverlappingIntervals_t *bwGetOverlappingIntervals(bigWigFile_t *fp, char *chro
     return output;
 }
 
+//Like above, but for bigBed files
+bbOverlappingEntries_t *bbGetOverlappingEntries(bigWigFile_t *fp, const char *chrom, uint32_t start, uint32_t end, int withString) {
+    bbOverlappingEntries_t *output;
+    uint32_t tid = bwGetTid(fp, chrom);
+    if(tid == (uint32_t) -1) return NULL;
+    bwOverlapBlock_t *blocks = bwGetOverlappingBlocks(fp, chrom, start, end);
+    if(!blocks) return NULL;
+    output = bbGetOverlappingEntriesCore(fp, blocks, tid, start, end, withString);
+    destroyBWOverlapBlock(blocks);
+    return output;
+}
+
+//Returns NULL on error
+bwOverlapIterator_t *bwOverlappingIntervalsIterator(bigWigFile_t *fp, const char *chrom, uint32_t start, uint32_t end, uint32_t blocksPerIteration) {
+    bwOverlapIterator_t *output = NULL;
+    uint64_t n;
+    uint32_t tid = bwGetTid(fp, chrom);
+    if(tid == (uint32_t) -1) return output;
+    output = calloc(1, sizeof(bwOverlapIterator_t));
+    if(!output) return output;
+    bwOverlapBlock_t *blocks = bwGetOverlappingBlocks(fp, chrom, start, end);
+
+    output->bw = fp;
+    output->tid = tid;
+    output->start = start;
+    output->end = end;
+    output->blocks = blocks;
+    output->blocksPerIteration = blocksPerIteration;
+
+    if(blocks) {
+        n = blocks->n;
+        if(n>blocksPerIteration) blocks->n = blocksPerIteration;
+        output->intervals = bwGetOverlappingIntervalsCore(fp, blocks,tid, start, end);
+        blocks->n = n;
+        output->offset = blocksPerIteration;
+    }
+    output->data = output->intervals;
+    return output;
+}
+
+//Returns NULL on error
+bwOverlapIterator_t *bbOverlappingEntriesIterator(bigWigFile_t *fp, const char *chrom, uint32_t start, uint32_t end, int withString, uint32_t blocksPerIteration) {
+    bwOverlapIterator_t *output = NULL;
+    uint64_t n;
+    uint32_t tid = bwGetTid(fp, chrom);
+    if(tid == (uint32_t) -1) return output;
+    output = calloc(1, sizeof(bwOverlapIterator_t));
+    if(!output) return output;
+    bwOverlapBlock_t *blocks = bwGetOverlappingBlocks(fp, chrom, start, end);
+
+    output->bw = fp;
+    output->tid = tid;
+    output->start = start;
+    output->end = end;
+    output->blocks = blocks;
+    output->blocksPerIteration = blocksPerIteration;
+    output->withString = withString;
+
+    if(blocks) {
+        n = blocks->n;
+        if(n>blocksPerIteration) blocks->n = blocksPerIteration;
+        output->entries = bbGetOverlappingEntriesCore(fp, blocks,tid, start, end, withString);
+        blocks->n = n;
+        output->offset = blocksPerIteration;
+    }
+    output->data = output->entries;
+    return output;
+}
+
+void bwIteratorDestroy(bwOverlapIterator_t *iter) {
+    if(!iter) return;
+    if(iter->blocks) destroyBWOverlapBlock((bwOverlapBlock_t*) iter->blocks);
+    if(iter->intervals) bwDestroyOverlappingIntervals(iter->intervals);
+    if(iter->entries) bbDestroyOverlappingEntries(iter->entries);
+    free(iter);
+}
+
+//On error, points to NULL and destroys the input
+bwOverlapIterator_t *bwIteratorNext(bwOverlapIterator_t *iter) {
+    uint64_t n, *offset, *size;
+    bwOverlapBlock_t *blocks = iter->blocks;
+
+    if(iter->intervals) {
+        bwDestroyOverlappingIntervals(iter->intervals);
+        iter->intervals = NULL;
+    }
+    if(iter->entries) {
+        bbDestroyOverlappingEntries(iter->entries);
+        iter->entries = NULL;
+    }
+    iter->data = NULL;
+
+    if(iter->offset < blocks->n) {
+        //store the previous values
+        n = blocks->n;
+        offset = blocks->offset;
+        size = blocks->size;
+
+        //Move the start of the blocks
+        blocks->offset += iter->offset;
+        blocks->size += iter->offset;
+        if(iter->offset + iter->blocksPerIteration > n) {
+            blocks->n = blocks->n - iter->offset;
+        } else {
+            blocks->n = iter->blocksPerIteration;
+        }
+
+        //Get the intervals or entries, as appropriate
+        if(iter->bw->type == 0) {
+            //bigWig
+            iter->intervals = bwGetOverlappingIntervalsCore(iter->bw, blocks, iter->tid, iter->start, iter->end);
+            iter->data = iter->intervals;
+        } else {
+            //bigBed
+            iter->entries = bbGetOverlappingEntriesCore(iter->bw, blocks, iter->tid, iter->start, iter->end, iter->withString);
+            iter->data = iter->entries;
+        }
+        iter->offset += iter->blocksPerIteration;
+
+        //reset the values in iter->blocks
+        blocks->n = n;
+        blocks->offset = offset;
+        blocks->size = size;
+
+        //Check for error
+        if(!iter->intervals && !iter->entries) goto error;
+    }
+
+    return iter;
+
+error:
+    bwIteratorDestroy(iter);
+    return NULL;
+}
+
 //This is like bwGetOverlappingIntervals, except it returns 1 base windows. If includeNA is not 0, then a value will be returned for every position in the range (defaulting to NAN).
 //The ->end member is NULL
 //If includeNA is not 0 then ->start is also NULL, since it's implied
 //Note that bwDestroyOverlappingIntervals() will work in either case
-bwOverlappingIntervals_t *bwGetValues(bigWigFile_t *fp, char *chrom, uint32_t start, uint32_t end, int includeNA) {
+bwOverlappingIntervals_t *bwGetValues(bigWigFile_t *fp, const char *chrom, uint32_t start, uint32_t end, int includeNA) {
     uint32_t i, j, n;
     bwOverlappingIntervals_t *output = NULL;
     bwOverlappingIntervals_t *intermediate = bwGetOverlappingIntervals(fp, chrom, start, end);
@@ -469,9 +720,9 @@ bwOverlappingIntervals_t *bwGetValues(bigWigFile_t *fp, char *chrom, uint32_t st
     if(!output) goto error;
     if(includeNA) {
         output->l = end-start;
-        output->value = malloc((end-start)*sizeof(float));
+        output->value = malloc(output->l*sizeof(float));
         if(!output->value) goto error;
-        for(i=0; i<end-start; i++) output->value[i] = strtod("NaN", NULL);
+        for(i=0; i<output->l; i++) output->value[i] = NAN;
         for(i=0; i<intermediate->l; i++) {
             for(j=intermediate->start[i]; j<intermediate->end[i]; j++) {
                 if(j < start || j >= end) continue;
