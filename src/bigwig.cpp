@@ -18,7 +18,7 @@ writable::data_frame read_bigwig_impl(std::string bwfname, std::string chrom, in
   bwf = bwOpen(&bwfile[0], NULL, &mode) ;
 
   if (!bwf)
-    stop("Failed to open file: %s\n", bwfname) ;
+    stop("Failed to open file: %s\n", bwfname.c_str()) ;
 
   std::vector<std::string> chroms ;
   std::vector<int> starts ;
@@ -42,7 +42,7 @@ writable::data_frame read_bigwig_impl(std::string bwfname, std::string chrom, in
     intervals = bwGetValues(bwf, cur_chrom, start, end, 0) ;
 
     if (!intervals)
-      stop("Failed to retreived intervals for %s\n", chrom) ;
+      stop("Failed to retreived intervals for %s\n", chrom.c_str()) ;
 
     int nint = intervals->l ;
     for(int i=0; i<nint; ++i) {
