@@ -11,6 +11,6 @@
 "_PACKAGE"
 
 ## usethis namespace: start
-#' @useDynLib bigwig, .registration = TRUE
+#' @useDynLib cpp11bigwig, .registration = TRUE
 ## usethis namespace: end
 NULL

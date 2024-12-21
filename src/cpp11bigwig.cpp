@@ -2,7 +2,7 @@
 #include <cpp11/data_frame.hpp>
 using namespace cpp11;
 
-#include "libBigWig/bigWig.h"
+#include "bigWig.h"
 
 [[cpp11::register]]
 writable::data_frame read_bigwig_impl(std::string bwfname, std::string chrom, int start, int end) {
