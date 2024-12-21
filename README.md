@@ -1,14 +1,27 @@
-`bigwrig`: access bigWig files with R
-================
 
-`bigwrig` provides read access to bigWig files in R using `libBigWig` from @dpryan79. Data is read into an R `data_frame`.
+
+# cpp11bigwig
+
+<!-- badges: start -->
+
+[![R-CMD-check](https://github.com/rnabioco/RcppLibBigWig/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rnabioco/RcppLibBigWig/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
+cpp11bigwig provides read access to bigWig files in R using `libBigWig`
+from @dpryan79. Data is read into an R `data.frame`.
+
+## Installation
+
+<div class=".pkgdown-devel">
 
 ``` r
-library(bigwrig)
+# Install development version from GitHub
+# install.packages("pak")
+pak::pak("rnabioco/cpp11bigwig")
+```
 
-url <- ''
+</div>
 
-read_bigwig(url)
-
-read_bigwig_genome(url)
+``` r
+library(cpp11bigwig)
 ```
