@@ -16,7 +16,7 @@ cpp11 to wrap libBigWig from @dpryan79.
 Useful links:
 \itemize{
   \item \url{https://rnabioco.github.io/cpp11bigwig/}
-  \item \url{https://www.github.com/rnabioco/cpp11bigwig}
+  \item \url{https://github.com/rnabioco/cpp11bigwig}
 }
 
 }

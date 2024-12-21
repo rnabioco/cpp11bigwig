@@ -3,7 +3,7 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/rnabioco/RcppLibBigWig/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rnabioco/RcppLibBigWig/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/rnabioco/cpp11bigwig/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rnabioco/cpp11bigwig/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 cpp11bigwig provides read access to bigWig files in R using `libBigWig`

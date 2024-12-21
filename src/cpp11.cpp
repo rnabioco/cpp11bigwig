@@ -5,7 +5,7 @@
 #include "cpp11/declarations.hpp"
 #include <R_ext/Visibility.h>
 
-// bigwig.cpp
+// cpp11bigwig.cpp
 writable::data_frame read_bigwig_impl(std::string bwfname, std::string chrom, int start, int end);
 extern "C" SEXP _cpp11bigwig_read_bigwig_impl(SEXP bwfname, SEXP chrom, SEXP start, SEXP end) {
   BEGIN_CPP11
