@@ -5,7 +5,7 @@ using namespace cpp11;
 #include "libBigWig/bigWig.h"
 
 [[cpp11::register]]
-cpp11::writable::data_frame read_bigwig_impl(std::string bwfname, std::string chrom, int start, int end) {
+writable::data_frame read_bigwig_impl(std::string bwfname, std::string chrom, int start, int end) {
 
   //http://stackoverflow.com/questions/347949/how-to-convert-a-stdstring-to-const-char-or-char
   std::vector<char> bwfile(bwfname.begin(), bwfname.end()) ;
@@ -70,10 +70,3 @@ cpp11::writable::data_frame read_bigwig_impl(std::string bwfname, std::string ch
   }) ;
 
 }
-
-/***R
-library(dplyr)
-read_bigwig_impl('src/libBigWig/test/test.bw', '', -1, -1) %>% as_data_frame
-read_bigwig_impl('src/libBigWig/test/test.bw', '1', -1, -1) %>% as_data_frame
-read_bigwig_impl('src/libBigWig/test/test.bw', 'x', -1, -1) %>% as_data_frame
-*/

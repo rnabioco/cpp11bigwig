@@ -1,5 +1,2 @@
-# See Section 1.2.1 "Using 'Makevars'" of Writing R Extensions
-# cran.r-project.org/doc/manuals/R-exts.pdf
-
-CFLAG = -fPIC -g -O3
-LDFLAGS = -shared
+PKG_CPPFLAGS = -IlibBigWig
+PKG_LIBS = libBigWig/libBigWig.a
