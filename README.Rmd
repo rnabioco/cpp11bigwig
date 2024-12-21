@@ -1,5 +1,5 @@
 ---
-format: gfm
+output: github_document
 ---
 
 # cpp11bigwig
@@ -13,7 +13,8 @@ cpp11bigwig provides read access to bigWig files in R using `libBigWig` from @dp
 ## Installation
 
 ::: .pkgdown-devel
-```{r, eval = FALSE}
+```{r}
+#| eval: false
 # Install development version from GitHub
 # install.packages("pak")
 pak::pak("rnabioco/cpp11bigwig")

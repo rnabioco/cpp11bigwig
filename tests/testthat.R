@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(bigwrig)
+library(cpp11bigwig)
 
-test_check("bigwrig")
+test_check("cpp11bigwig")
