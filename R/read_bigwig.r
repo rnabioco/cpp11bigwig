@@ -13,7 +13,14 @@
 #'
 #' @examples
 #' bw <- system.file('extdata', 'test.bw', package = 'cpp11bigwig')
+#'
 #' read_bigwig(bw)
+#'
+#' read_bigwig(bw, chrom = "10")
+#'
+#' read_bigwig(bw, chrom = "1", start = 100, end = 130)
+#'
+#' head(read_bigwig(bw, raw = TRUE), n = 10)
 #'
 #' @export
 read_bigwig <- function(bwfile, chrom = NULL, start = NULL, end = NULL, raw = FALSE) {

@@ -4,7 +4,7 @@ Title: Read-only access to bigWig Files
 Version: 0.1.0
 Authors@R: 
     person("Jay", "Hesselberth", , "jay.hesselberth@gmail.com", role = c("aut", "cre"))
-Description: cpp11bigwig wraps libBigWig by @dpryan79.
+Description: cpp11bigwig wraps libBigWig.
 License: MIT + file LICENSE
 URL: https://rnabioco.github.io/cpp11bigwig/,
     https://github.com/rnabioco/cpp11bigwig
@@ -17,4 +17,5 @@ Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: TRUE
 RoxygenNote: 7.3.2
-SystemRequirements: libcurl (>= 7.62): libcurl-devel (rpm) or libcurl4-openssl-dev (deb)
+SystemRequirements: libcurl (>= 7.62): libcurl-devel (rpm) or
+    libcurl4-openssl-dev (deb)
