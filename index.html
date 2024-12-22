@@ -62,7 +62,7 @@
 </h1></div>
 <!-- badges: start -->
 
-<p>cpp11bigwig provides read access to bigWig files in R using <code>libBigWig</code> from @dpryan79. Data is read into an R <code>data.frame</code>.</p>
+<p>cpp11bigwig provides read access to bigWig files in R using <a href="https://github.com/dpryan79/libBigWig" class="external-link">libBigWig</a>. Data is read into an R <code>data.frame</code>.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -73,7 +73,18 @@
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"rnabioco/cpp11bigwig"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rnabioco.github.io/cpp11bigwig/">cpp11bigwig</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rnabioco.github.io/cpp11bigwig/">cpp11bigwig</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">bw</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">'extdata'</span>, <span class="st">'test.bw'</span>, package <span class="op">=</span> <span class="st">'cpp11bigwig'</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/read_bigwig.html">read_bigwig</a></span><span class="op">(</span><span class="va">bw</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="do">##   chrom start end value</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="do">## 1     1     0   1   0.1</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="do">## 2     1     1   2   0.2</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="do">## 3     1     2   3   0.3</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="do">## 4     1   100 150   1.4</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="do">## 5     1   150 151   1.5</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="do">## 6    10   200 300   2.0</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
