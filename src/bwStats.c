@@ -476,7 +476,7 @@ static double *bwStatsFromZoom(bigWigFile_t *fp, int32_t level, uint32_t tid, ui
     return output;
 
 error:
-    fprintf(stderr, "got an error in bwStatsFromZoom in the range %"PRIu32"-%"PRIu32": %s\n", pos, end2, strerror(errno));
+//     fprintf(stderr, "got an error in bwStatsFromZoom in the range %"PRIu32"-%"PRIu32": %s\n", pos, end2, strerror(errno));
     if(blocks) destroyBWOverlapBlock(blocks);
     if(output) free(output);
     return NULL;

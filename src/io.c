@@ -30,10 +30,10 @@ CURLcode urlFetchData(URL_t *URL, unsigned long bufSize) {
     else URL->filePos = 0;
 
     URL->bufPos = URL->bufLen = 0; //Otherwise, we can't copy anything into the buffer!
-    sprintf(range,"%lu-%lu", URL->filePos, URL->filePos+bufSize-1);
+//     sprintf(range,"%lu-%lu", URL->filePos, URL->filePos+bufSize-1);
     rv = curl_easy_setopt(URL->x.curl, CURLOPT_RANGE, range);
     if(rv != CURLE_OK) {
-        fprintf(stderr, "[urlFetchData] Couldn't set the range (%s)\n", range);
+//         fprintf(stderr, "[urlFetchData] Couldn't set the range (%s)\n", range);
         return rv;
     }
 
@@ -53,7 +53,7 @@ size_t url_fread(void *obuf, size_t obufSize, URL_t *URL) {
         if(!URL->bufLen) {
             rv = urlFetchData(URL, URL->bufSize);
             if(rv != CURLE_OK) {
-                fprintf(stderr, "[url_fread] urlFetchData (A) returned %s\n", curl_easy_strerror(rv));
+//                 fprintf(stderr, "[url_fread] urlFetchData (A) returned %s\n", curl_easy_strerror(rv));
                 return 0;
             }  
         } else if(URL->bufLen < URL->bufPos + remaining) { //Copy the remaining buffer and reload the buffer as needed
@@ -69,7 +69,7 @@ size_t url_fread(void *obuf, size_t obufSize, URL_t *URL) {
                 }
                 rv = urlFetchData(URL, fetchSize);
                 if(rv != CURLE_OK) {
-                    fprintf(stderr, "[url_fread] urlFetchData (B) returned %s\n", curl_easy_strerror(rv));
+//                     fprintf(stderr, "[url_fread] urlFetchData (B) returned %s\n", curl_easy_strerror(rv));
                     return 0;
                 }
             }
@@ -138,15 +138,15 @@ CURLcode urlSeek(URL_t *URL, size_t pos) {
             URL->bufLen = 0; //Otherwise, filePos will get incremented on the next read!
             URL->bufPos = 0;
             //Maybe this works for FTP?
-            sprintf(range,"%lu-%lu", pos, pos+URL->bufSize-1);
+//             sprintf(range,"%lu-%lu", pos, pos+URL->bufSize-1);
             rv = curl_easy_setopt(URL->x.curl, CURLOPT_RANGE, range);
             if(rv != CURLE_OK) {
-                fprintf(stderr, "[urlSeek] Couldn't set the range (%s)\n", range);
+//                 fprintf(stderr, "[urlSeek] Couldn't set the range (%s)\n", range);
                 return rv;
             }
             rv = curl_easy_perform(URL->x.curl);
             if(rv != CURLE_OK) {
-                fprintf(stderr, "[urlSeek] curl_easy_perform received an error!\n");
+//                 fprintf(stderr, "[urlSeek] curl_easy_perform received an error!\n");
             }
             errno = 0;  //Don't propogate remnant resolved libCurl errors
             return rv;
@@ -186,7 +186,7 @@ URL_t *urlOpen(const char *fname, CURLcode (*callBack)(CURL*), const char *mode)
             URL->x.fp = fopen(fname, "rb");
             if(!(URL->x.fp)) {
                 free(URL);
-                fprintf(stderr, "[urlOpen] Couldn't open %s for reading\n", fname);
+//                 fprintf(stderr, "[urlOpen] Couldn't open %s for reading\n", fname);
                 return NULL;
             }
 #ifndef NOCURL
@@ -195,65 +195,65 @@ URL_t *urlOpen(const char *fname, CURLcode (*callBack)(CURL*), const char *mode)
             URL->memBuf = malloc(GLOBAL_DEFAULTBUFFERSIZE);
             if(!(URL->memBuf)) {
                 free(URL);
-                fprintf(stderr, "[urlOpen] Couldn't allocate enough space for the file buffer!\n");
+//                 fprintf(stderr, "[urlOpen] Couldn't allocate enough space for the file buffer!\n");
                 return NULL;
             }
             URL->bufSize = GLOBAL_DEFAULTBUFFERSIZE;
             URL->x.curl = curl_easy_init();
             if(!(URL->x.curl)) {
-                fprintf(stderr, "[urlOpen] curl_easy_init() failed!\n");
+//                 fprintf(stderr, "[urlOpen] curl_easy_init() failed!\n");
                 goto error;
             }
             //Negotiate a reasonable HTTP authentication method
             if(curl_easy_setopt(URL->x.curl, CURLOPT_HTTPAUTH, CURLAUTH_ANY) != CURLE_OK) {
-                fprintf(stderr, "[urlOpen] Failed instructing curl to use any HTTP authentication it finds to be suitable!\n");
+//                 fprintf(stderr, "[urlOpen] Failed instructing curl to use any HTTP authentication it finds to be suitable!\n");
                 goto error;
             }
             //Follow redirects
             if(curl_easy_setopt(URL->x.curl, CURLOPT_FOLLOWLOCATION, 1L) != CURLE_OK) {
-                fprintf(stderr, "[urlOpen] Failed instructing curl to follow redirects!\n");
+//                 fprintf(stderr, "[urlOpen] Failed instructing curl to follow redirects!\n");
                 goto error;
             }
             //Set the URL
             if(curl_easy_setopt(URL->x.curl, CURLOPT_URL, fname) != CURLE_OK) {
-                fprintf(stderr, "[urlOpen] Couldn't set CURLOPT_URL!\n");
+//                 fprintf(stderr, "[urlOpen] Couldn't set CURLOPT_URL!\n");
                 goto error;
             }
             //Set the range, which doesn't do anything for HTTP
-            sprintf(range, "0-%lu", URL->bufSize-1);
+//             sprintf(range, "0-%lu", URL->bufSize-1);
             if(curl_easy_setopt(URL->x.curl, CURLOPT_RANGE, range) != CURLE_OK) {
-                fprintf(stderr, "[urlOpen] Couldn't set CURLOPT_RANGE (%s)!\n", range);
+//                 fprintf(stderr, "[urlOpen] Couldn't set CURLOPT_RANGE (%s)!\n", range);
                 goto error;
             }
             //Set the callback info, which means we no longer need to directly deal with sockets and header!
             if(curl_easy_setopt(URL->x.curl, CURLOPT_WRITEFUNCTION, bwFillBuffer) != CURLE_OK) {
-                fprintf(stderr, "[urlOpen] Couldn't set CURLOPT_WRITEFUNCTION!\n");
+//                 fprintf(stderr, "[urlOpen] Couldn't set CURLOPT_WRITEFUNCTION!\n");
                 goto error;
             }
             if(curl_easy_setopt(URL->x.curl, CURLOPT_WRITEDATA, (void*)URL) != CURLE_OK) {
-                fprintf(stderr, "[urlOpen] Couldn't set CURLOPT_WRITEDATA!\n");
+//                 fprintf(stderr, "[urlOpen] Couldn't set CURLOPT_WRITEDATA!\n");
                 goto error;
             }
             //Ignore certificate errors with https, libcurl just isn't reliable enough with conda
             if(curl_easy_setopt(URL->x.curl, CURLOPT_SSL_VERIFYPEER, 0) != CURLE_OK) {
-                fprintf(stderr, "[urlOpen] Couldn't set CURLOPT_SSL_VERIFYPEER to 0!\n");
+//                 fprintf(stderr, "[urlOpen] Couldn't set CURLOPT_SSL_VERIFYPEER to 0!\n");
                 goto error;
             }
             if(curl_easy_setopt(URL->x.curl, CURLOPT_SSL_VERIFYHOST, 0) != CURLE_OK) {
-                fprintf(stderr, "[urlOpen] Couldn't set CURLOPT_SSL_VERIFYHOST to 0!\n");
+//                 fprintf(stderr, "[urlOpen] Couldn't set CURLOPT_SSL_VERIFYHOST to 0!\n");
                 goto error;
             }
             if(callBack) {
                 code = callBack(URL->x.curl);
                 if(code != CURLE_OK) {
-                    fprintf(stderr, "[urlOpen] The user-supplied call back function returned an error: %s\n", curl_easy_strerror(code));
+//                     fprintf(stderr, "[urlOpen] The user-supplied call back function returned an error: %s\n", curl_easy_strerror(code));
                     goto error;
                 }
             }
             code = curl_easy_perform(URL->x.curl);
             errno = 0; //Sometimes curl_easy_perform leaves a random errno remnant
             if(code != CURLE_OK) {
-                fprintf(stderr, "[urlOpen] curl_easy_perform received an error: %s\n", curl_easy_strerror(code));
+//                 fprintf(stderr, "[urlOpen] curl_easy_perform received an error: %s\n", curl_easy_strerror(code));
                 goto error;
             }
 #endif
@@ -263,7 +263,7 @@ URL_t *urlOpen(const char *fname, CURLcode (*callBack)(CURL*), const char *mode)
         URL->x.fp = fopen(fname, mode);
         if(!(URL->x.fp)) {
             free(URL);
-            fprintf(stderr, "[urlOpen] Couldn't open %s for writing\n", fname);
+//             fprintf(stderr, "[urlOpen] Couldn't open %s for writing\n", fname);
             return NULL;
         }
     }

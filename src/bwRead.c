@@ -164,7 +164,7 @@ static void bwHdrRead(bigWigFile_t *bw) {
 
 error:
     bwHdrDestroy(bw->hdr);
-    fprintf(stderr, "[bwHdrRead] There was an error while reading in the header!\n");
+//     fprintf(stderr, "[bwHdrRead] There was an error while reading in the header!\n");
     bw->hdr = NULL;
 }
 
@@ -289,7 +289,7 @@ static void bwDestroyWriteBuffer(bwWriteBuffer_t *wb) {
 void bwClose(bigWigFile_t *fp) {
     if(!fp) return;
     if(bwFinalize(fp)) {
-        fprintf(stderr, "[bwClose] There was an error while finishing writing a bigWig file! The output is likely truncated.\n");
+//         fprintf(stderr, "[bwClose] There was an error while finishing writing a bigWig file! The output is likely truncated.\n");
     }
     if(fp->URL) urlClose(fp->URL);
     if(fp->hdr) bwHdrDestroy(fp->hdr);
@@ -325,7 +325,7 @@ char *bbGetSQL(bigWigFile_t *fp) {
 
 error:
     if(o) free(o);
-    printf("Got an error in bbGetSQL!\n");
+//     printf("Got an error in bbGetSQL!\n");
     return NULL;
 }
 
@@ -345,28 +345,28 @@ int bbIsBigBed(const char *fname, CURLcode (*callBack) (CURL*)) {
 bigWigFile_t *bwOpen(const char *fname, CURLcode (*callBack) (CURL*), const char *mode) {
     bigWigFile_t *bwg = calloc(1, sizeof(bigWigFile_t));
     if(!bwg) {
-        fprintf(stderr, "[bwOpen] Couldn't allocate space to create the output object!\n");
+//         fprintf(stderr, "[bwOpen] Couldn't allocate space to create the output object!\n");
         return NULL;
     }
     if((!mode) || (strchr(mode, 'w') == NULL)) {
         bwg->isWrite = 0;
         bwg->URL = urlOpen(fname, *callBack, NULL);
         if(!bwg->URL) {
-            fprintf(stderr, "[bwOpen] urlOpen is NULL!\n");
+//             fprintf(stderr, "[bwOpen] urlOpen is NULL!\n");
             goto error;
         }
 
         //Attempt to read in the fixed header
         bwHdrRead(bwg);
         if(!bwg->hdr) {
-            fprintf(stderr, "[bwOpen] bwg->hdr is NULL!\n");
+//             fprintf(stderr, "[bwOpen] bwg->hdr is NULL!\n");
             goto error;
         }
 
         //Read in the chromosome list
         bwg->cl = bwReadChromList(bwg);
         if(!bwg->cl) {
-            fprintf(stderr, "[bwOpen] bwg->cl is NULL (%s)!\n", fname);
+//             fprintf(stderr, "[bwOpen] bwg->cl is NULL (%s)!\n", fname);
             goto error;
         }
 
@@ -374,7 +374,7 @@ bigWigFile_t *bwOpen(const char *fname, CURLcode (*callBack) (CURL*), const char
         if(bwg->hdr->indexOffset) {
             bwg->idx = bwReadIndex(bwg, 0);
             if(!bwg->idx) {
-                fprintf(stderr, "[bwOpen] bwg->idx is NULL bwg->hdr->dataOffset 0x%"PRIx64"!\n", bwg->hdr->dataOffset);
+//                 fprintf(stderr, "[bwOpen] bwg->idx is NULL bwg->hdr->dataOffset 0x%"PRIx64"!\n", bwg->hdr->dataOffset);
                 goto error;
             }
         }
@@ -397,7 +397,7 @@ error:
 bigWigFile_t *bbOpen(const char *fname, CURLcode (*callBack) (CURL*)) {
     bigWigFile_t *bb = calloc(1, sizeof(bigWigFile_t));
     if(!bb) {
-        fprintf(stderr, "[bbOpen] Couldn't allocate space to create the output object!\n");
+//         fprintf(stderr, "[bbOpen] Couldn't allocate space to create the output object!\n");
         return NULL;
     }
 
