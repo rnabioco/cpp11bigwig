@@ -3,6 +3,9 @@
 
 using namespace cpp11;
 
+#include <string>
+#include <vector>
+
 #include "bigWig.h"
 
 [[cpp11::register]]
