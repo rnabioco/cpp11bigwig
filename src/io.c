@@ -14,7 +14,7 @@ size_t GLOBAL_DEFAULTBUFFERSIZE;
 #ifndef NOCURL
 uint64_t getContentLength(const URL_t *URL) {
     double size;
-    if(curl_easy_getinfo(URL->x.curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &size) != CURLE_OK) {
+    if(curl_easy_getinfo(URL->x.curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &size) != CURLE_OK) {
         return 0;
     }
     if(size== -1.0) return 0;
@@ -55,7 +55,7 @@ size_t url_fread(void *obuf, size_t obufSize, URL_t *URL) {
             if(rv != CURLE_OK) {
 //                 fprintf(stderr, "[url_fread] urlFetchData (A) returned %s\n", curl_easy_strerror(rv));
                 return 0;
-            }  
+            }
         } else if(URL->bufLen < URL->bufPos + remaining) { //Copy the remaining buffer and reload the buffer as needed
             p = memcpy(p, URL->memBuf+URL->bufPos, URL->bufLen - URL->bufPos);
             if(!p) return 0;
