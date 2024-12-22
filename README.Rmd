@@ -9,7 +9,7 @@ output: github_document
 [![Codecov test coverage](https://codecov.io/gh/rnabioco/cpp11bigwig/graph/badge.svg)](https://app.codecov.io/gh/rnabioco/cpp11bigwig)
 <!-- badges: end -->
 
-cpp11bigwig provides read access to bigWig files in R using `libBigWig` from @dpryan79. Data is read into an R `data.frame`.
+cpp11bigwig provides read access to bigWig files in R using [libBigWig](https://github.com/dpryan79/libBigWig). Data is read into an R `data.frame`.
 
 ## Installation
 
@@ -24,6 +24,9 @@ pak::pak("rnabioco/cpp11bigwig")
 
 
 ```{r}
-#| eval: false
 library(cpp11bigwig)
+
+bw = system.file('extdata', 'test.bw', package = 'cpp11bigwig')
+
+read_bigwig(bw)
 ```
