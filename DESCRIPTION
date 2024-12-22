@@ -1,11 +1,11 @@
 Type: Package
 Package: cpp11bigwig
-Title: Read bigWig Files.
+Title: Read-only access to bigWig Files
 Version: 0.1.0
 Authors@R: 
     person("Jay", "Hesselberth", , "jay.hesselberth@gmail.com", role = c("aut", "cre"))
 Description: cpp11bigwig wraps libBigWig by @dpryan79.
-License: MIT
+License: MIT + file LICENSE
 URL: https://rnabioco.github.io/cpp11bigwig/,
     https://github.com/rnabioco/cpp11bigwig
 Suggests: 

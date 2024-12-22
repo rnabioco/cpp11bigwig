@@ -4,7 +4,7 @@
 \alias{read_bigwig}
 \title{Read data from bigWig files.}
 \usage{
-read_bigwig(bwfile, chrom = "", start = -1, end = -1)
+read_bigwig(bwfile, chrom = NULL, start = NULL, end = NULL, raw = FALSE)
 }
 \arguments{
 \item{bwfile}{filename for bigWig file}
@@ -14,6 +14,8 @@ read_bigwig(bwfile, chrom = "", start = -1, end = -1)
 \item{start}{start position for data}
 
 \item{end}{end position for data}
+
+\item{raw}{return raw data, single-base intervals}
 }
 \value{
 \code{data.frame}

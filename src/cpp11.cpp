@@ -6,16 +6,16 @@
 #include <R_ext/Visibility.h>
 
 // cpp11bigwig.cpp
-writable::data_frame read_bigwig_impl(std::string bwfname, std::string chrom, int start, int end);
-extern "C" SEXP _cpp11bigwig_read_bigwig_impl(SEXP bwfname, SEXP chrom, SEXP start, SEXP end) {
+writable::data_frame read_bigwig_cpp(std::string bwfname, sexp chrom, sexp start, sexp end, sexp raw);
+extern "C" SEXP _cpp11bigwig_read_bigwig_cpp(SEXP bwfname, SEXP chrom, SEXP start, SEXP end, SEXP raw) {
   BEGIN_CPP11
-    return cpp11::as_sexp(read_bigwig_impl(cpp11::as_cpp<cpp11::decay_t<std::string>>(bwfname), cpp11::as_cpp<cpp11::decay_t<std::string>>(chrom), cpp11::as_cpp<cpp11::decay_t<int>>(start), cpp11::as_cpp<cpp11::decay_t<int>>(end)));
+    return cpp11::as_sexp(read_bigwig_cpp(cpp11::as_cpp<cpp11::decay_t<std::string>>(bwfname), cpp11::as_cpp<cpp11::decay_t<sexp>>(chrom), cpp11::as_cpp<cpp11::decay_t<sexp>>(start), cpp11::as_cpp<cpp11::decay_t<sexp>>(end), cpp11::as_cpp<cpp11::decay_t<sexp>>(raw)));
   END_CPP11
 }
 
 extern "C" {
 static const R_CallMethodDef CallEntries[] = {
-    {"_cpp11bigwig_read_bigwig_impl", (DL_FUNC) &_cpp11bigwig_read_bigwig_impl, 4},
+    {"_cpp11bigwig_read_bigwig_cpp", (DL_FUNC) &_cpp11bigwig_read_bigwig_cpp, 5},
     {NULL, NULL, 0}
 };
 }

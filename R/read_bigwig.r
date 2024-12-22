@@ -4,6 +4,7 @@
 #' @param chrom read data for specific chromosome
 #' @param start start position for data
 #' @param end end position for data
+#' @param raw return raw data, single-base intervals
 #'
 #' @return \code{data.frame}
 #'
@@ -15,15 +16,15 @@
 #' read_bigwig(bw)
 #'
 #' @export
-read_bigwig <- function(bwfile, chrom = "", start = -1, end = -1) {
+read_bigwig <- function(bwfile, chrom = NULL, start = NULL, end = NULL, raw = FALSE) {
 
   if (!file.exists(bwfile)) {
     stop("File does not exist: ", bwfile)
   }
 
-  # if ((!is.null(start) && start < 0) || (!is.null(end) && end < 0)) {
-  #   stop("`start` and `end` must both be >= 0")
-  # }
+  if ((!is.null(start) && start < 0) || (!is.null(end) && end < 0)) {
+    stop("`start` and `end` must both be >= 0")
+  }
 
-  read_bigwig_impl(bwfile, chrom, start, end)
+  read_bigwig_cpp(bwfile, chrom, start, end, raw)
 }
