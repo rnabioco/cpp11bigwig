@@ -4,10 +4,10 @@
 \alias{read_bigwig}
 \title{Read data from bigWig files.}
 \usage{
-read_bigwig(bwfile, genome, chrom = "", start = -1, end = -1)
+read_bigwig(bwfile, chrom = "", start = -1, end = -1)
 }
 \arguments{
-\item{bwfile}{filename or URL for bigWig file}
+\item{bwfile}{filename for bigWig file}
 
 \item{chrom}{read data for specific chromosome}
 
@@ -22,7 +22,7 @@ read_bigwig(bwfile, genome, chrom = "", start = -1, end = -1)
 Read data from bigWig files.
 }
 \examples{
-bw <- system.file('extdata', 'test.bw', package = 'bigwrig')
+bw <- system.file('extdata', 'test.bw', package = 'cpp11bigwig')
 read_bigwig(bw)
 
 }

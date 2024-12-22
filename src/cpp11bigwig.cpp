@@ -35,9 +35,9 @@ writable::data_frame read_bigwig_impl(std::string bwfname, std::string chrom, in
 
     if (!chrom.empty() && chrom != cur_chrom_c) continue ;
 
-    // set maximum boundaries of start / end are not specified
+    // set maximum boundaries if start / end are not specified
     if (start == -1) start = 0 ;
-    if (end == -1) end = bwf->hdr->nBasesCovered ;
+    if (end == -1) end = bwf->cl->len[nc];
 
     intervals = bwGetValues(bwf, cur_chrom, start, end, 0) ;
 
