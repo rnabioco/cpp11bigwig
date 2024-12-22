@@ -50,13 +50,13 @@ writable::data_frame read_bigwig_cpp(std::string bwfname, sexp chrom, sexp start
     intervals = bwGetValues(bwf, bw_chrom, bw_start, bw_end, 0) ;
 
     if (!intervals)
-      stop("Failed to retreived intervals for %s\n", bw_chrom) ;
+      stop("Failed to retreived intervals for chrom `%s`\n", bw_chrom) ;
 
     int nint = intervals->l ;
+
     for(int i=0; i<nint; ++i) {
 
-      // +1 for 1-based coordinates
-      int start = intervals->start[i] + 1;
+      int start = intervals->start[i] ;
       int end = start + 1 ;
       float val = intervals->value[i] ;
 
@@ -73,11 +73,43 @@ writable::data_frame read_bigwig_cpp(std::string bwfname, sexp chrom, sexp start
   bwClose(bwf) ;
   bwCleanup() ;
 
-  return writable::data_frame({
-      "chrom"_nm = chroms,
-      "start"_nm = starts,
-      "end"_nm = ends,
-      "value"_nm = vals
-    }) ;
+  if (raw) {
+    return writable::data_frame({
+        "chrom"_nm = chroms,
+        "start"_nm = starts,
+        "end"_nm = ends,
+        "value"_nm = vals
+      }) ;
+  }
 
+  std::vector<std::string> bg_chroms ;
+  std::vector<int> bg_starts ;
+  std::vector<int> bg_ends ;
+  std::vector<float> bg_vals ;
+
+  // collapse single-base intervals to interval spans with the same value
+  int n = chroms.size() ;
+  for (int i=0; i<n; ++i) {
+    if (i == 0) {
+      bg_chroms.push_back(chroms[i]) ;
+      bg_starts.push_back(starts[i]) ;
+      bg_ends.push_back(ends[i]) ;
+      bg_vals.push_back(vals[i]) ;
+    } else {
+      if (chroms[i] == bg_chroms.back() && vals[i] == bg_vals.back()) {
+        bg_ends.back() = ends[i] ;
+      } else {
+        bg_chroms.push_back(chroms[i]) ;
+        bg_starts.push_back(starts[i]) ;
+        bg_ends.push_back(ends[i]) ;
+        bg_vals.push_back(vals[i]) ;
+      }
+    }
+  }
+  return writable::data_frame({
+    "chrom"_nm = bg_chroms,
+    "start"_nm = bg_starts,
+    "end"_nm = bg_ends,
+    "value"_nm = bg_vals
+  }) ;
 }
