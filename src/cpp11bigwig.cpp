@@ -11,12 +11,11 @@ using namespace cpp11;
 writable::data_frame read_bigwig_cpp(std::string bwfname, sexp chrom, sexp start, sexp end) {
 
   const char* bwfile = bwfname.c_str() ;
-  const char mode = 'r' ;
 
   bigWigFile_t *bwf = NULL;
 
   // NULL can be a CURL callback. see libBigWig demos
-  bwf = bwOpen(bwfile, NULL, &mode) ;
+  bwf = bwOpen(bwfile, NULL, "r") ;
 
   if (!bwf)
     stop("Failed to open file: '%s'\n", bwfname.c_str()) ;
@@ -169,12 +168,11 @@ writable::data_frame read_bigbed_cpp(std::string bbfname, sexp chrom, sexp start
 std::string bigbed_sql_cpp(std::string bbfname) {
 
   const char* bbfile = bbfname.c_str() ;
-  const char mode = 'r' ;
 
   bigWigFile_t *bbf = NULL;
 
   // NULL can be a CURL callback. see libBigWig demos
-  bbf = bwOpen(bbfile, NULL, &mode) ;
+  bbf = bwOpen(bbfile, NULL, "r") ;
 
   if (!bbf)
     stop("Failed to open file: '%s'\n", bbfname.c_str()) ;
