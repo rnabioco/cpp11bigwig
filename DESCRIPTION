@@ -1,13 +1,19 @@
 Type: Package
 Package: cpp11bigwig
-Title: Read-only access to bigWig Files
-Version: 0.1.0
-Authors@R: 
-    person("Jay", "Hesselberth", , "jay.hesselberth@gmail.com", role = c("aut", "cre"))
+Title: Read-only access to bigWig and bigBed files
+Version: 0.0.0.9000
+Authors@R: c(
+    person("Jay", "Hesselberth", , "jay.hesselberth@gmail.com", role = c("aut", "cre", "cph")),
+    person("Devon", "Ryan", role = "cph")
+  )
 Description: cpp11bigwig wraps libBigWig.
 License: MIT + file LICENSE
 URL: https://rnabioco.github.io/cpp11bigwig/,
     https://github.com/rnabioco/cpp11bigwig
+Imports: 
+    GenomicRanges,
+    IRanges,
+    tibble
 Suggests: 
     testthat (>= 3.0.0)
 LinkingTo: 
@@ -19,7 +25,4 @@ LazyData: TRUE
 RoxygenNote: 7.3.2
 SystemRequirements: libcurl (>= 7.62): libcurl-devel (rpm) or
     libcurl4-openssl-dev (deb)
-Imports: 
-    GenomicRanges,
-    IRanges,
-    tibble
+BugReports: https://github.com/rnabioco/cpp11bigwig/issues

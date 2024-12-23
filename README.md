@@ -14,6 +14,15 @@ R `data.frame`.
 
 ## Installation
 
+<div class=".pkgdown-release">
+
+``` r
+# Install released version from CRAN
+install.packages("cpp11bigwig")
+```
+
+</div>
+
 <div class=".pkgdown-devel">
 
 ``` r
