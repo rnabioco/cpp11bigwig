@@ -182,5 +182,7 @@ std::string bigbed_sql_cpp(std::string bbfname) {
   std::string sql_str(sql) ;
   free(sql) ;
 
+  bwClose(bbf) ;
+
   return(sql_str) ;
 }
