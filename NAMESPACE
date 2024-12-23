@@ -2,5 +2,7 @@
 
 export(read_bigbed)
 export(read_bigwig)
+importFrom(GenomicRanges,GRanges)
+importFrom(IRanges,IRanges)
 importFrom(tibble,as_tibble)
 useDynLib(cpp11bigwig, .registration = TRUE)

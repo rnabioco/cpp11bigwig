@@ -2,6 +2,15 @@
 output: github_document
 ---
 
+```{r}
+#| echo: false
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/"
+)
+```
+
 # cpp11bigwig
 
 <!-- badges: start -->

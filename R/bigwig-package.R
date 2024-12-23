@@ -11,7 +11,9 @@
 "_PACKAGE"
 
 ## usethis namespace: start
-#' @importFrom tibble as_tibble
 #' @useDynLib cpp11bigwig, .registration = TRUE
+#' @importFrom tibble as_tibble
+#' @importFrom GenomicRanges GRanges
+#' @importFrom IRanges IRanges
 ## usethis namespace: end
 NULL

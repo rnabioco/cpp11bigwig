@@ -30,12 +30,13 @@ library(cpp11bigwig)
 bw = system.file('extdata', 'test.bw', package = 'cpp11bigwig')
 
 read_bigwig(bw)
+#> # A tibble: 6 × 4
+#>   chrom start   end value
+#>   <chr> <int> <int> <dbl>
+#> 1 1         0     1 0.100
+#> 2 1         1     2 0.200
+#> 3 1         2     3 0.300
+#> 4 1       100   150 1.40 
+#> 5 1       150   151 1.5  
+#> 6 10      200   300 2
 ```
-
-    ##   chrom start end value
-    ## 1     1     0   1   0.1
-    ## 2     1     1   2   0.2
-    ## 3     1     2   3   0.3
-    ## 4     1   100 150   1.4
-    ## 5     1   150 151   1.5
-    ## 6    10   200 300   2.0
