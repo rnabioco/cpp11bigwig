@@ -45,7 +45,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">read_bigwig</span><span class="op">(</span><span class="va">bwfile</span>, chrom <span class="op">=</span> <span class="cn">NULL</span>, start <span class="op">=</span> <span class="cn">NULL</span>, end <span class="op">=</span> <span class="cn">NULL</span>, raw <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">read_bigwig</span><span class="op">(</span><span class="va">bwfile</span>, chrom <span class="op">=</span> <span class="cn">NULL</span>, start <span class="op">=</span> <span class="cn">NULL</span>, end <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -66,10 +66,6 @@
 
 <dt id="arg-end">end<a class="anchor" aria-label="anchor" href="#arg-end"></a></dt>
 <dd><p>end position for data</p></dd>
-
-
-<dt id="arg-raw">raw<a class="anchor" aria-label="anchor" href="#arg-raw"></a></dt>
-<dd><p>return raw data, single-base intervals</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -102,9 +98,6 @@
 <span class="r-in"><span><span class="fu">read_bigwig</span><span class="op">(</span><span class="va">bw</span>, chrom <span class="op">=</span> <span class="st">"1"</span>, start <span class="op">=</span> <span class="fl">100</span>, end <span class="op">=</span> <span class="fl">130</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   chrom start end value</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1     1   100 130   1.4</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">read_bigwig</span><span class="op">(</span><span class="va">bw</span>, raw <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in read_bigwig(bw, raw = TRUE):</span> unused argument (raw = TRUE)</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
