@@ -21,6 +21,13 @@ test_that("results have expected shape", {
   res <- read_bigwig(bw, as = 'gr')
   expect_true("GRanges" %in% class(res))
 
+  # bigbed
+  bb <- test_path("data/test.bb")
+  res <- read_bigbed(bb)
+
+  expect_equal(ncol(res), 12)
+  expect_equal(nrow(res), 3)
+
 })
 
 test_that("missing file causes error", {
