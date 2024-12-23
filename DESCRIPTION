@@ -19,3 +19,7 @@ LazyData: TRUE
 RoxygenNote: 7.3.2
 SystemRequirements: libcurl (>= 7.62): libcurl-devel (rpm) or
     libcurl4-openssl-dev (deb)
+Imports: 
+    GenomicRanges,
+    IRanges,
+    tibble
