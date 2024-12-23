@@ -994,8 +994,8 @@ int addIntervalValue(bigWigFile_t *fp, uint64_t *nEntries, double *sum, double *
             newBuffer->p = calloc(itemsPerSlot, 32);
             if(!newBuffer->p) goto error;
             newBuffer->m = itemsPerSlot*32;
-            memcpy(newBuffer->p, buffer->p+buffer->l-32, 4);
-            memcpy(newBuffer->p+4, buffer->p+buffer->l-28, 4);
+            memcpy(newBuffer->p, (unsigned char*)buffer->p+buffer->l-32, 4);
+            memcpy((unsigned char*)newBuffer->p+4, (unsigned char*)buffer->p + buffer->l-28, 4);
             ((uint32_t*) newBuffer->p)[2] = ((uint32_t*) newBuffer->p)[1] + zoom;
             *sum = *sumsq = 0.0;
             rv = updateInterval(fp, newBuffer, sum, sumsq, zoom, tid, start, end, value);
