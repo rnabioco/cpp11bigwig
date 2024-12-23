@@ -26,7 +26,7 @@ int bwSetPos(bigWigFile_t *fp, size_t pos) {
 size_t bwRead(void *data, size_t sz, size_t nmemb, bigWigFile_t *fp) {
     size_t i, rv;
     for(i=0; i<nmemb; i++) {
-        rv = urlRead(fp->URL, data+i*sz, sz);
+        rv = urlRead(fp->URL, (char*)data + i*sz, sz);
         if(rv != sz) return i;
     }
     return nmemb;
@@ -49,7 +49,7 @@ int bwInit(size_t defaultBufSize) {
 }
 
 //This should be called before quiting, to release memory acquired by curl
-void bwCleanup() {
+void bwCleanup(void) {
 #ifndef NOCURL
     curl_global_cleanup();
 #endif

@@ -57,9 +57,9 @@ size_t url_fread(void *obuf, size_t obufSize, URL_t *URL) {
                 return 0;
             }
         } else if(URL->bufLen < URL->bufPos + remaining) { //Copy the remaining buffer and reload the buffer as needed
-            p = memcpy(p, URL->memBuf+URL->bufPos, URL->bufLen - URL->bufPos);
+            p = memcpy(p, (char*)URL->memBuf+URL->bufPos, URL->bufLen - URL->bufPos);
             if(!p) return 0;
-            p += URL->bufLen - URL->bufPos;
+            p = (char*)p + (URL->bufLen - URL->bufPos);
             remaining -= URL->bufLen - URL->bufPos;
             if(remaining) {
                 if(!URL->isCompressed) {
@@ -74,7 +74,7 @@ size_t url_fread(void *obuf, size_t obufSize, URL_t *URL) {
                 }
             }
         } else {
-            p = memcpy(p, URL->memBuf+URL->bufPos, remaining);
+            p = memcpy(p, (char*)URL->memBuf+URL->bufPos, remaining);
             if(!p) return 0;
             URL->bufPos += remaining;
             remaining = 0;
@@ -104,7 +104,7 @@ size_t bwFillBuffer(const void *inBuf, size_t l, size_t nmemb, void *pURL) {
     size_t copied = l*nmemb;
     if(!p) return 0;
 
-    p += URL->bufLen;
+    p = (char*)p + URL->bufLen;
     if(l*nmemb > URL->bufSize - URL->bufPos) { //We received more than we can store!
         copied = URL->bufSize - URL->bufLen;
     }
