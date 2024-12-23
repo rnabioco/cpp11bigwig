@@ -75,8 +75,7 @@
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rnabioco.github.io/cpp11bigwig/">cpp11bigwig</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">bw</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">'extdata'</span>, <span class="st">'test.bw'</span>, package <span class="op">=</span> <span class="st">'cpp11bigwig'</span><span class="op">)</span></span>
-<span></span>
+<span><span class="va">bw</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">'extdata'</span>, <span class="st">'test.bw'</span>, package <span class="op">=</span> <span class="st">'cpp11bigwig'</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/read_bigwig.html">read_bigwig</a></span><span class="op">(</span><span class="va">bw</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 6 × 4</span></span>
 <span><span class="co">#&gt;   chrom start   end value</span></span>
@@ -86,7 +85,17 @@
 <span><span class="co">#&gt; 3 1         2     3 0.300</span></span>
 <span><span class="co">#&gt; 4 1       100   150 1.40 </span></span>
 <span><span class="co">#&gt; 5 1       150   151 1.5  </span></span>
-<span><span class="co">#&gt; 6 10      200   300 2</span></span></code></pre></div>
+<span><span class="co">#&gt; 6 10      200   300 2</span></span>
+<span></span>
+<span><span class="va">bb</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">'extdata'</span>, <span class="st">'test.bb'</span>, package <span class="op">=</span> <span class="st">'cpp11bigwig'</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/read_bigbed.html">read_bigbed</a></span><span class="op">(</span><span class="va">bb</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 3 × 12</span></span>
+<span><span class="co">#&gt;   chrom  start    end name  score strand thickStart thickEnd reserved blockCount</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;  &lt;int&gt;  &lt;int&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;      &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;     </span></span>
+<span><span class="co">#&gt; 1 chr1  4.80e6 4.80e6 test… 1     +      4797973    4836816  1        9         </span></span>
+<span><span class="co">#&gt; 2 chr10 4.85e6 4.85e6 diff… 1     +      4848118    4880877  1        6         </span></span>
+<span><span class="co">#&gt; 3 chr20 5.07e6 5.07e6 negs… 1     -      5073253    5152630  1        14        </span></span>
+<span><span class="co">#&gt; # ℹ 2 more variables: blockSizes &lt;chr&gt;, chromStarts &lt;chr&gt;</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
