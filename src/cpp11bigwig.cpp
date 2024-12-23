@@ -167,15 +167,14 @@ writable::data_frame read_bigbed_cpp(std::string bbfname, sexp chrom, sexp start
 
 [[cpp11::register]]
 std::string bigbed_sql_cpp(std::string bbfname) {
-  std::vector<char> bbfile(bbfname.begin(), bbfname.end()) ;
-  bbfile.push_back('\0') ;
 
+  const char* bbfile = bbfname.c_str() ;
   const char mode = 'r' ;
 
   bigWigFile_t *bbf = NULL;
 
   // NULL can be a CURL callback. see libBigWig demos
-  bbf = bwOpen(&bbfile[0], NULL, &mode) ;
+  bbf = bwOpen(bbfile, NULL, &mode) ;
 
   if (!bbf)
     stop("Failed to open file: '%s'\n", bbfname.c_str()) ;
