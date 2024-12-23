@@ -8,9 +8,8 @@
 coverage](https://codecov.io/gh/rnabioco/cpp11bigwig/graph/badge.svg)](https://app.codecov.io/gh/rnabioco/cpp11bigwig)
 <!-- badges: end -->
 
-cpp11bigwig provides read access to bigWig files in R using
-[libBigWig](https://github.com/dpryan79/libBigWig). Data is read into an
-R `data.frame`.
+cpp11bigwig provides read-only access to bigWig and bigBed files using
+libBigWig <https://github.com/dpryan79/libBigWig>.
 
 ## Installation
 
