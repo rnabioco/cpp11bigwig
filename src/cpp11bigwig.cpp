@@ -3,7 +3,6 @@
 
 using namespace cpp11;
 
-#include <string>
 #include <vector>
 
 #include "bigWig.h"
@@ -91,3 +90,106 @@ writable::data_frame read_bigwig_cpp(std::string bwfname, sexp chrom, sexp start
   }) ;
 }
 
+[[cpp11::register]]
+writable::data_frame read_bigbed_cpp(std::string bbfname, sexp chrom, sexp start, sexp end) {
+
+  //http://stackoverflow.com/questions/347949/how-to-convert-a-stdstring-to-const-char-or-char
+  std::vector<char> bbfile(bbfname.begin(), bbfname.end()) ;
+  bbfile.push_back('\0') ;
+
+  bigWigFile_t *bbf = NULL;
+
+  // NULL can be a CURL callback. see libBigWig demos
+  bbf = bbOpen(&bbfile[0], NULL) ;
+
+  if (!bbf)
+    stop("Failed to open file: '%s'\n", bbfname.c_str()) ;
+
+  std::vector<std::string> chroms ;
+  std::vector<int> starts ;
+  std::vector<int> ends ;
+  std::vector<std::string> vals;
+
+  bbOverlappingEntries_t *intervals ;
+
+  int nchrom = bbf->cl->nKeys ;
+  for (int nc = 0; nc<nchrom; ++nc) {
+
+    char* bb_chrom = bbf->cl->chrom[nc] ;
+    std::string bb_chrom_c(bb_chrom) ;
+
+    if (!Rf_isNull(chrom)) {
+      std::string r_chrom = as_cpp<std::string>(chrom) ;
+      if (r_chrom != bb_chrom_c) continue ;
+    }
+
+    // set maximum boundaries if start / end are not specified
+    int bb_start = Rf_isNull(start) ? 0 : as_cpp<int>(start) ;
+    int bb_end = Rf_isNull(end) ? bbf->cl->len[nc] : as_cpp<int>(end) ;
+
+    intervals = bbGetOverlappingEntries(bbf, bb_chrom, bb_start, bb_end, 1) ;
+
+    if (!intervals)
+      stop("Failed to retreived intervals for chrom `%s`\n", bb_chrom) ;
+
+    int nint = intervals->l ;
+
+    for(int i=0; i<nint; ++i) {
+
+      int start = intervals->start[i] ;
+      int end = start + 1 ;
+      std::string val = intervals->str[i] ;
+
+      if (i == 0) {
+        chroms.push_back(bb_chrom_c) ;
+        starts.push_back(start) ;
+        ends.push_back(end) ;
+        vals.push_back(val) ;
+      } else {
+        if (start == ends.back() && val == vals.back()) {
+          ends.back() = end ;
+        } else {
+          chroms.push_back(bb_chrom_c) ;
+          starts.push_back(start) ;
+          ends.push_back(end) ;
+          vals.push_back(val) ;
+        }
+      }
+    }
+
+    bbDestroyOverlappingEntries(intervals) ;
+  }
+
+  bwClose(bbf) ;
+  bwCleanup() ;
+
+  return writable::data_frame({
+    "chrom"_nm = chroms,
+      "start"_nm = starts,
+      "end"_nm = ends,
+      "value"_nm = vals
+  }) ;
+}
+
+[[cpp11::register]]
+std::string bigbed_sql_cpp(std::string bbfname) {
+  std::vector<char> bbfile(bbfname.begin(), bbfname.end()) ;
+  bbfile.push_back('\0') ;
+
+  const char mode = 'r' ;
+
+  bigWigFile_t *bbf = NULL;
+
+  // NULL can be a CURL callback. see libBigWig demos
+  bbf = bwOpen(&bbfile[0], NULL, &mode) ;
+
+  if (!bbf)
+    stop("Failed to open file: '%s'\n", bbfname.c_str()) ;
+
+  char* sql = bbGetSQL(bbf) ;
+
+  std::string sql_str(sql) ;
+  free(sql) ;
+
+  return(sql_str) ;
+}

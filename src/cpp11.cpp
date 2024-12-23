@@ -12,9 +12,25 @@ extern "C" SEXP _cpp11bigwig_read_bigwig_cpp(SEXP bwfname, SEXP chrom, SEXP star
     return cpp11::as_sexp(read_bigwig_cpp(cpp11::as_cpp<cpp11::decay_t<std::string>>(bwfname), cpp11::as_cpp<cpp11::decay_t<sexp>>(chrom), cpp11::as_cpp<cpp11::decay_t<sexp>>(start), cpp11::as_cpp<cpp11::decay_t<sexp>>(end)));
   END_CPP11
 }
+// cpp11bigwig.cpp
+writable::data_frame read_bigbed_cpp(std::string bbfname, sexp chrom, sexp start, sexp end);
+extern "C" SEXP _cpp11bigwig_read_bigbed_cpp(SEXP bbfname, SEXP chrom, SEXP start, SEXP end) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(read_bigbed_cpp(cpp11::as_cpp<cpp11::decay_t<std::string>>(bbfname), cpp11::as_cpp<cpp11::decay_t<sexp>>(chrom), cpp11::as_cpp<cpp11::decay_t<sexp>>(start), cpp11::as_cpp<cpp11::decay_t<sexp>>(end)));
+  END_CPP11
+}
+// cpp11bigwig.cpp
+std::string bigbed_sql_cpp(std::string bbfname);
+extern "C" SEXP _cpp11bigwig_bigbed_sql_cpp(SEXP bbfname) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(bigbed_sql_cpp(cpp11::as_cpp<cpp11::decay_t<std::string>>(bbfname)));
+  END_CPP11
+}
 
 extern "C" {
 static const R_CallMethodDef CallEntries[] = {
+    {"_cpp11bigwig_bigbed_sql_cpp",  (DL_FUNC) &_cpp11bigwig_bigbed_sql_cpp,  1},
+    {"_cpp11bigwig_read_bigbed_cpp", (DL_FUNC) &_cpp11bigwig_read_bigbed_cpp, 4},
     {"_cpp11bigwig_read_bigwig_cpp", (DL_FUNC) &_cpp11bigwig_read_bigwig_cpp, 4},
     {NULL, NULL, 0}
 };

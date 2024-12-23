@@ -11,6 +11,12 @@ test_that("results have expected shape", {
   # interval values
   expect_equal(sum(res$value), 5.5)
 
+  bb <- test_path("data/test.bb")
+  res <- read_bigbed(bb)
+
+  expect_equal(ncol(res), 12)
+  expect_equal(nrow(res), 3)
+
 })
 
 test_that("missing file causes error", {

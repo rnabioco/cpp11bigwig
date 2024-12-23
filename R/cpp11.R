@@ -3,3 +3,11 @@
 read_bigwig_cpp <- function(bwfname, chrom, start, end) {
   .Call(`_cpp11bigwig_read_bigwig_cpp`, bwfname, chrom, start, end)
 }
+
+read_bigbed_cpp <- function(bbfname, chrom, start, end) {
+  .Call(`_cpp11bigwig_read_bigbed_cpp`, bbfname, chrom, start, end)
+}
+
+bigbed_sql_cpp <- function(bbfname) {
+  .Call(`_cpp11bigwig_bigbed_sql_cpp`, bbfname)
+}

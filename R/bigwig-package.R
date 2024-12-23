@@ -11,6 +11,7 @@
 "_PACKAGE"
 
 ## usethis namespace: start
+#' @importFrom tibble as_tibble
 #' @useDynLib cpp11bigwig, .registration = TRUE
 ## usethis namespace: end
 NULL
