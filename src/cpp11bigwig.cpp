@@ -9,7 +9,7 @@ using namespace cpp11;
 #include "bigWig.h"
 
 [[cpp11::register]]
-writable::data_frame read_bigwig_cpp(std::string bwfname, sexp chrom, sexp start, sexp end, sexp raw) {
+writable::data_frame read_bigwig_cpp(std::string bwfname, sexp chrom, sexp start, sexp end) {
 
   //http://stackoverflow.com/questions/347949/how-to-convert-a-stdstring-to-const-char-or-char
   std::vector<char> bwfile(bwfname.begin(), bwfname.end()) ;
@@ -60,11 +60,21 @@ writable::data_frame read_bigwig_cpp(std::string bwfname, sexp chrom, sexp start
       int end = start + 1 ;
       float val = intervals->value[i] ;
 
-      starts.push_back(start) ;
-      ends.push_back(end) ;
-      vals.push_back(val) ;
-
-      chroms.push_back(bw_chrom_c) ;
+      if (i == 0) {
+        chroms.push_back(bw_chrom_c) ;
+        starts.push_back(start) ;
+        ends.push_back(end) ;
+        vals.push_back(val) ;
+      } else {
+        if (start == ends.back() && val == vals.back()) {
+          ends.back() = end ;
+        } else {
+          chroms.push_back(bw_chrom_c) ;
+          starts.push_back(start) ;
+          ends.push_back(end) ;
+          vals.push_back(val) ;
+        }
+      }
     }
 
     bwDestroyOverlappingIntervals(intervals) ;
@@ -73,43 +83,11 @@ writable::data_frame read_bigwig_cpp(std::string bwfname, sexp chrom, sexp start
   bwClose(bwf) ;
   bwCleanup() ;
 
-  if (raw) {
-    return writable::data_frame({
-        "chrom"_nm = chroms,
-        "start"_nm = starts,
-        "end"_nm = ends,
-        "value"_nm = vals
-      }) ;
-  }
-
-  std::vector<std::string> bg_chroms ;
-  std::vector<int> bg_starts ;
-  std::vector<int> bg_ends ;
-  std::vector<float> bg_vals ;
-
-  // collapse single-base intervals to interval spans with the same value
-  int n = chroms.size() ;
-  for (int i=0; i<n; ++i) {
-    if (i == 0) {
-      bg_chroms.push_back(chroms[i]) ;
-      bg_starts.push_back(starts[i]) ;
-      bg_ends.push_back(ends[i]) ;
-      bg_vals.push_back(vals[i]) ;
-    } else {
-      if (chroms[i] == bg_chroms.back() && vals[i] == bg_vals.back()) {
-        bg_ends.back() = ends[i] ;
-      } else {
-        bg_chroms.push_back(chroms[i]) ;
-        bg_starts.push_back(starts[i]) ;
-        bg_ends.push_back(ends[i]) ;
-        bg_vals.push_back(vals[i]) ;
-      }
-    }
-  }
   return writable::data_frame({
-    "chrom"_nm = bg_chroms,
-    "start"_nm = bg_starts,
-    "end"_nm = bg_ends,
-    "value"_nm = bg_vals
+    "chrom"_nm = chroms,
+    "start"_nm = starts,
+    "end"_nm = ends,
+    "value"_nm = vals
   }) ;
 }
+
