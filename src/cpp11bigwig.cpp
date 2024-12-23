@@ -10,16 +10,13 @@ using namespace cpp11;
 [[cpp11::register]]
 writable::data_frame read_bigwig_cpp(std::string bwfname, sexp chrom, sexp start, sexp end) {
 
-  //http://stackoverflow.com/questions/347949/how-to-convert-a-stdstring-to-const-char-or-char
-  std::vector<char> bwfile(bwfname.begin(), bwfname.end()) ;
-  bwfile.push_back('\0') ;
-
+  const char* bwfile = bwfname.c_str() ;
   const char mode = 'r' ;
 
   bigWigFile_t *bwf = NULL;
 
   // NULL can be a CURL callback. see libBigWig demos
-  bwf = bwOpen(&bwfile[0], NULL, &mode) ;
+  bwf = bwOpen(bwfile, NULL, &mode) ;
 
   if (!bwf)
     stop("Failed to open file: '%s'\n", bwfname.c_str()) ;
@@ -93,14 +90,11 @@ writable::data_frame read_bigwig_cpp(std::string bwfname, sexp chrom, sexp start
 [[cpp11::register]]
 writable::data_frame read_bigbed_cpp(std::string bbfname, sexp chrom, sexp start, sexp end) {
 
-  //http://stackoverflow.com/questions/347949/how-to-convert-a-stdstring-to-const-char-or-char
-  std::vector<char> bbfile(bbfname.begin(), bbfname.end()) ;
-  bbfile.push_back('\0') ;
-
+  const char* bbfile = bbfname.c_str() ;
   bigWigFile_t *bbf = NULL;
 
   // NULL can be a CURL callback. see libBigWig demos
-  bbf = bbOpen(&bbfile[0], NULL) ;
+  bbf = bbOpen(bbfile, NULL) ;
 
   if (!bbf)
     stop("Failed to open file: '%s'\n", bbfname.c_str()) ;
