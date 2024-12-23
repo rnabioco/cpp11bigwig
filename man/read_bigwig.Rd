@@ -4,7 +4,7 @@
 \alias{read_bigwig}
 \title{Read data from bigWig files.}
 \usage{
-read_bigwig(bwfile, chrom = NULL, start = NULL, end = NULL)
+read_bigwig(bwfile, chrom = NULL, start = NULL, end = NULL, as = NULL)
 }
 \arguments{
 \item{bwfile}{filename for bigWig file}
@@ -14,9 +14,12 @@ read_bigwig(bwfile, chrom = NULL, start = NULL, end = NULL)
 \item{start}{start position for data}
 
 \item{end}{end position for data}
+
+\item{as}{return data as a specific type.
+The default is a tibble (`tbl`) or GRanges (`gr`)}
 }
 \value{
-\code{data.frame}
+\code{tibble}
 }
 \description{
 Read data from bigWig files.
@@ -29,6 +32,8 @@ read_bigwig(bw)
 read_bigwig(bw, chrom = "10")
 
 read_bigwig(bw, chrom = "1", start = 100, end = 130)
+
+read_bigwig(bw, as = 'gr')
 
 }
 \seealso{
