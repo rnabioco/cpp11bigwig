@@ -4,8 +4,10 @@
 #' @param chrom read data for specific chromosome
 #' @param start start position for data
 #' @param end end position for data
+#' @param as return data as a specific type.
+#'  The default is a tibble (`tbl`) or GRanges (`gr`)
 #'
-#' @return \code{data.frame}
+#' @return \code{tibble}
 #'
 #' @seealso \url{https://github.com/dpryan79/libBigWig}
 #' @seealso \url{https://github.com/brentp/bw-python}
@@ -19,8 +21,10 @@
 #'
 #' read_bigwig(bw, chrom = "1", start = 100, end = 130)
 #'
+#' read_bigwig(bw, as = 'gr')
+#'
 #' @export
-read_bigwig <- function(bwfile, chrom = NULL, start = NULL, end = NULL) {
+read_bigwig <- function(bwfile, chrom = NULL, start = NULL, end = NULL, as = NULL) {
 
   if (!file.exists(bwfile)) {
     stop("File does not exist: ", bwfile)
@@ -30,7 +34,27 @@ read_bigwig <- function(bwfile, chrom = NULL, start = NULL, end = NULL) {
     stop("`start` and `end` must both be >= 0")
   }
 
-  read_bigwig_cpp(bwfile, chrom, start, end)
+  if (!is.null(as) && !as %in% c("gr", "tbl")) {
+    stop("`as` must be one of 'gr' or 'tbl' (the default)")
+  }
+
+  res <- read_bigwig_cpp(bwfile, chrom, start, end)
+
+  if (!is.null(as) && as == 'gr') {
+    return(as_gr(res))
+  } else {
+    return(as_tibble(res))
+  }
+}
+
+#' convert to GRanges
+#' @noRd
+as_gr <- function(x) {
+  GRanges(
+    seqnames = x$chrom,
+    ranges = IRanges(start = x$start, end = x$end),
+    score = x$value
+  )
 }
 
 #' Read data from bigBed files.
