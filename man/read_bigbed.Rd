@@ -4,7 +4,7 @@
 \alias{read_bigbed}
 \title{Read data from bigBed files.}
 \usage{
-read_bigbed(bbfile, chrom = NULL, start = NULL, end = NULL, convert = FALSE)
+read_bigbed(bbfile, chrom = NULL, start = NULL, end = NULL, convert = TRUE)
 }
 \arguments{
 \item{bbfile}{filename for bigBed file}
