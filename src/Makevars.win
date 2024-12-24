@@ -1,2 +1,4 @@
+PKG_LIBS = -L./libBigWig -lBigWig
+
 CC=g++
 CXX=g++
