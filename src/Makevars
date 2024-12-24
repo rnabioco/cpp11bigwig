@@ -1,1 +1,9 @@
-PKG_LIBS = -lcurl
+PKG_LIBS = -L./libBigWig -lBigWig
+
+.PHONY: all libBigWig
+
+all: $(SHLIB)
+$(SHLIB): libBigWig
+
+libBigWig:
+		(cd libBigWig; make)

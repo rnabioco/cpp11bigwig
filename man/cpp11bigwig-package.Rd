@@ -17,6 +17,7 @@ Useful links:
 \itemize{
   \item \url{https://rnabioco.github.io/cpp11bigwig/}
   \item \url{https://github.com/rnabioco/cpp11bigwig}
+  \item Report bugs at \url{https://github.com/rnabioco/cpp11bigwig/issues}
 }
 
 }

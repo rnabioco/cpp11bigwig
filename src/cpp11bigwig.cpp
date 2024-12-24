@@ -5,7 +5,7 @@ using namespace cpp11;
 
 #include <vector>
 
-#include "bigWig.h"
+#include "libBigWig/bigWig.h"
 
 [[cpp11::register]]
 writable::data_frame read_bigwig_cpp(std::string bwfname, sexp chrom, sexp start, sexp end) {
