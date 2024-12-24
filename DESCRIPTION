@@ -1,14 +1,16 @@
 Type: Package
 Package: cpp11bigwig
-Title: Read-only access to bigWig and bigBed files
+Title: Read bigWig and bigBed Files
 Version: 0.0.0.9000
 Authors@R: c(
     person("Jay", "Hesselberth", , "jay.hesselberth@gmail.com", role = c("aut", "cre")),
     person("RNA Bioscience Initiative", role = c("fnd", "cph")),
     person("Devon", "Ryan", role = "cph")
   )
-Description: Provides read-only access to bigWig and bigBed files using
-    libBigWig <https://github.com/dpryan79/libBigWig>.
+Description: Read bigWig and bigBed files using "libBigWig"
+    <https://github.com/dpryan79/libBigWig>. Provides lightweight access
+    to the binary bigWig and bigBed formats developed by the UCSC Genome
+    Browser group.
 License: MIT + file LICENSE
 URL: https://rnabioco.github.io/cpp11bigwig/,
     https://github.com/rnabioco/cpp11bigwig
