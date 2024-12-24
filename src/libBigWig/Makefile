@@ -1,9 +1,12 @@
 CFLAGS = -Wall -O3 -DNOCURL -fpic
 
-OBJECTS = bwRead.o bwStats.o bwValues.o bwWrite.o io.o
+BW_OBJECTS = bwRead.o bwStats.o bwValues.o bwWrite.o io.o
 
-libBigWig.a: $(OBJECTS)
-	ar rcs libBigWig.a $(OBJECTS)
+libBigWig.a: $(BW_OBJECTS)
+	ar rcs libBigWig.a $(BW_OBJECTS)
+
+libBigWig.so: $(BW_OBJECTS)
+	$(CC) -shared -o libBigWig.so $(BW_OBJECTS) $(PKG_LIBS)
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@
