@@ -1,4 +1,4 @@
-CFLAGS = -DNOCURL
+CFLAGS = -fPIC -DNOCURL
 
 BIGWIG_OBJECTS = bwRead.o bwStats.o bwValues.o bwWrite.o io.o
 
