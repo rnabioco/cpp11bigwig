@@ -3,7 +3,8 @@ Package: cpp11bigwig
 Title: Read-only access to bigWig and bigBed files
 Version: 0.0.0.9000
 Authors@R: c(
-    person("Jay", "Hesselberth", , "jay.hesselberth@gmail.com", role = c("aut", "cre", "cph")),
+    person("Jay", "Hesselberth", , "jay.hesselberth@gmail.com", role = c("aut", "cre")),
+    person("RNA Bioscience Initiative", role = c("fnd", "cph")),
     person("Devon", "Ryan", role = "cph")
   )
 Description: Provides read-only access to bigWig and bigBed files using
