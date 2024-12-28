@@ -1,6 +1,6 @@
-PKG_LIBS = -L./libBigWig -lBigWig
+PKG_LIBS = -L./libBigWig -lBigWig -lz
 
-CC=g++
+CC=gcc
 CXX=g++
 
 .PHONY: all libBigWig
