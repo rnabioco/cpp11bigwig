@@ -1,3 +1,5 @@
+CC = gcc
+
 CFLAGS = -Wall -O3 -DNOCURL -fpic
 
 BW_OBJECTS = bwRead.o bwStats.o bwValues.o bwWrite.o io.o
