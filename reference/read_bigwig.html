@@ -85,7 +85,7 @@ The default is a tibble (`tbl`) or GRanges (`gr`)</p></dd>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">bw</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">'extdata'</span>, <span class="st">'test.bw'</span>, package <span class="op">=</span> <span class="st">'cpp11bigwig'</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">bw</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"test.bw"</span>, package <span class="op">=</span> <span class="st">"cpp11bigwig"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">read_bigwig</span><span class="op">(</span><span class="va">bw</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 4</span></span>
@@ -110,8 +110,18 @@ The default is a tibble (`tbl`) or GRanges (`gr`)</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 1       100   130  1.40</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu">read_bigwig</span><span class="op">(</span><span class="va">bw</span>, as <span class="op">=</span> <span class="st">'gr'</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in read_bigwig(bw, as = "gr"):</span> `as` must be one of 'GRanges' or 'tbl' (the default)</span>
+<span class="r-in"><span><span class="fu">read_bigwig</span><span class="op">(</span><span class="va">bw</span>, as <span class="op">=</span> <span class="st">"GRanges"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> GRanges object with 6 ranges and 1 metadata column:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       seqnames    ranges strand |     score</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; | &lt;numeric&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [1]        1       0-1      * |       0.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [2]        1       1-2      * |       0.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [3]        1       2-3      * |       0.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [4]        1   100-150      * |       1.4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [5]        1   150-151      * |       1.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [6]       10   200-300      * |       2.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   -------</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   seqinfo: 2 sequences from an unspecified genome; no seqlengths</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
