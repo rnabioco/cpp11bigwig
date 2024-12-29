@@ -42,9 +42,9 @@ pak::pak("rnabioco/cpp11bigwig")
 ```{r}
 library(cpp11bigwig)
 
-bw <- system.file('extdata', 'test.bw', package = 'cpp11bigwig')
+bw <- system.file("extdata", "test.bw", package = "cpp11bigwig")
 read_bigwig(bw)
 
-bb <- system.file('extdata', 'test.bb', package = 'cpp11bigwig')
+bb <- system.file("extdata", "test.bb", package = "cpp11bigwig")
 read_bigbed(bb)
 ```

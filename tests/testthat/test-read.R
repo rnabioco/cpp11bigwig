@@ -1,4 +1,3 @@
-
 test_that("results have expected shape", {
   bw <- test_path("data/test.bw")
 
@@ -8,7 +7,7 @@ test_that("results have expected shape", {
   expect_true("tbl_df" %in% class(res))
 
   # interval sizes
-  expect_true(all(res$end - res$start == c(1,1,1,50,1,100)))
+  expect_true(all(res$end - res$start == c(1, 1, 1, 50, 1, 100)))
   # interval values
   expect_equal(sum(res$value), 5.5)
 
@@ -18,7 +17,7 @@ test_that("results have expected shape", {
   expect_equal(nrow(read_bigwig(bw, end = 3)), 3)
 
   # GRanges
-  res <- read_bigwig(bw, as = 'gr')
+  res <- read_bigwig(bw, as = "GRanges")
   expect_true("GRanges" %in% class(res))
 
   # bigbed
@@ -27,7 +26,6 @@ test_that("results have expected shape", {
 
   expect_equal(ncol(res), 12)
   expect_equal(nrow(res), 3)
-
 })
 
 test_that("missing file causes error", {

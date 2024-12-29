@@ -13,7 +13,7 @@
 #' @seealso \url{https://github.com/brentp/bw-python}
 #'
 #' @examples
-#' bw <- system.file('extdata', 'test.bw', package = 'cpp11bigwig')
+#' bw <- system.file("extdata", "test.bw", package = "cpp11bigwig")
 #'
 #' read_bigwig(bw)
 #'
@@ -21,11 +21,10 @@
 #'
 #' read_bigwig(bw, chrom = "1", start = 100, end = 130)
 #'
-#' read_bigwig(bw, as = 'gr')
+#' read_bigwig(bw, as = "GRanges")
 #'
 #' @export
 read_bigwig <- function(bwfile, chrom = NULL, start = NULL, end = NULL, as = NULL) {
-
   if (!file.exists(bwfile)) {
     stop("File does not exist: ", bwfile)
   }
@@ -34,14 +33,14 @@ read_bigwig <- function(bwfile, chrom = NULL, start = NULL, end = NULL, as = NUL
     stop("`start` and `end` must both be >= 0")
   }
 
-  if (!is.null(as) && !as %in% c("gr", "tbl")) {
-    stop("`as` must be one of 'gr' or 'tbl' (the default)")
+  if (!is.null(as) && !as %in% c("GRanges", "tbl")) {
+    stop("`as` must be one of 'GRanges' or 'tbl' (the default)")
   }
 
   res <- read_bigwig_cpp(bwfile, chrom, start, end)
 
-  if (!is.null(as) && as == 'gr') {
-    return(as_gr(res))
+  if (!is.null(as) && as == "GRanges") {
+    return(as_granges(res))
   } else {
     return(as_tibble(res))
   }
@@ -49,7 +48,7 @@ read_bigwig <- function(bwfile, chrom = NULL, start = NULL, end = NULL, as = NUL
 
 #' convert to GRanges
 #' @noRd
-as_gr <- function(x) {
+as_granges <- function(x) {
   GRanges(
     seqnames = x$chrom,
     ranges = IRanges(start = x$start, end = x$end),
@@ -71,7 +70,7 @@ as_gr <- function(x) {
 #' @seealso \url{https://github.com/brentp/bw-python}
 #'
 #' @examples
-#' bb <- system.file('extdata', 'test.bb', package = 'cpp11bigwig')
+#' bb <- system.file("extdata", "test.bb", package = "cpp11bigwig")
 #'
 #' read_bigbed(bb)
 #'
@@ -79,7 +78,6 @@ as_gr <- function(x) {
 #'
 #' @export
 read_bigbed <- function(bbfile, chrom = NULL, start = NULL, end = NULL, convert = TRUE) {
-
   if (!file.exists(bbfile)) {
     stop("File does not exist: ", bbfile)
   }
@@ -107,12 +105,11 @@ read_bigbed <- function(bbfile, chrom = NULL, start = NULL, end = NULL, convert 
 }
 
 #' @examples
-#' bb <- system.file('extdata', 'test.bb', package = 'cpp11bigwig')
+#' bb <- system.file("extdata", "test.bb", package = "cpp11bigwig")
 #' bigbed_sql_fields(bb)
 #'
 #' @noRd
 bigbed_sql_fields <- function(bbfile) {
-
   res <- bigbed_sql_cpp(bbfile)
 
   # parse the autoSql

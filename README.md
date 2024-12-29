@@ -35,7 +35,7 @@ pak::pak("rnabioco/cpp11bigwig")
 ``` r
 library(cpp11bigwig)
 
-bw <- system.file('extdata', 'test.bw', package = 'cpp11bigwig')
+bw <- system.file("extdata", "test.bw", package = "cpp11bigwig")
 read_bigwig(bw)
 #> # A tibble: 6 × 4
 #>   chrom start   end value
@@ -47,7 +47,7 @@ read_bigwig(bw)
 #> 5 1       150   151 1.5  
 #> 6 10      200   300 2
 
-bb <- system.file('extdata', 'test.bb', package = 'cpp11bigwig')
+bb <- system.file("extdata", "test.bb", package = "cpp11bigwig")
 read_bigbed(bb)
 #> # A tibble: 3 × 12
 #>   chrom  start    end name  score strand thickStart thickEnd reserved blockCount
