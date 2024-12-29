@@ -24,7 +24,7 @@ read_bigbed(bbfile, chrom = NULL, start = NULL, end = NULL, convert = TRUE)
 Read data from bigBed files.
 }
 \examples{
-bb <- system.file('extdata', 'test.bb', package = 'cpp11bigwig')
+bb <- system.file("extdata", "test.bb", package = "cpp11bigwig")
 
 read_bigbed(bb)
 

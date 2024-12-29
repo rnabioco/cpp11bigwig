@@ -25,7 +25,7 @@ The default is a tibble (`tbl`) or GRanges (`gr`)}
 Read data from bigWig files.
 }
 \examples{
-bw <- system.file('extdata', 'test.bw', package = 'cpp11bigwig')
+bw <- system.file("extdata", "test.bw", package = "cpp11bigwig")
 
 read_bigwig(bw)
 
@@ -33,7 +33,7 @@ read_bigwig(bw, chrom = "10")
 
 read_bigwig(bw, chrom = "1", start = 100, end = 130)
 
-read_bigwig(bw, as = 'gr')
+read_bigwig(bw, as = "GRanges")
 
 }
 \seealso{
