@@ -10,7 +10,7 @@ bigwig provides methods to read data from bigWig files. bigwig uses
 cpp11 to wrap libBigWig from @dpryan79.
 }
 \details{
-<https://github.com/dpryan79/libBigWig>
+\url{https://github.com/dpryan79/libBigWig}
 }
 \seealso{
 Useful links:
@@ -22,6 +22,6 @@ Useful links:
 
 }
 \author{
-Jay Hesselberth <jay.hesselberth@gmail.com>
+Jay Hesselberth \href{mailto:jay.hesselberth@gmail.com}{jay.hesselberth@gmail.com}
 }
 \keyword{internal}

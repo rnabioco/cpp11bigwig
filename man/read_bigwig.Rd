@@ -16,7 +16,7 @@ read_bigwig(bwfile, chrom = NULL, start = NULL, end = NULL, as = NULL)
 \item{end}{end position for data}
 
 \item{as}{return data as a specific type.
-The default is a tibble (`tbl`) or GRanges (`gr`)}
+The default is a tibble (\code{tbl}) or GRanges (\code{gr})}
 }
 \value{
 \code{tibble}
