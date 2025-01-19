@@ -38,6 +38,7 @@ pak::pak("rnabioco/cpp11bigwig")
 ```
 :::
 
+## Usage
 
 ```{r}
 library(cpp11bigwig)

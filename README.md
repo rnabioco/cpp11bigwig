@@ -32,6 +32,8 @@ pak::pak("rnabioco/cpp11bigwig")
 
 </div>
 
+## Usage
+
 ``` r
 library(cpp11bigwig)
 
