@@ -1,5 +1,7 @@
 # cpp11bigwig (development version)
 
+* Sync with [libBigWig v0.4.8](https://github.com/dpryan79/libBigWig/releases/tag/0.4.8)
+
 # cpp11bigwig 0.1.0
 
 * Initial CRAN submission.
