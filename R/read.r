@@ -24,7 +24,13 @@
 #' read_bigwig(bw, as = "GRanges")
 #'
 #' @export
-read_bigwig <- function(bwfile, chrom = NULL, start = NULL, end = NULL, as = NULL) {
+read_bigwig <- function(
+  bwfile,
+  chrom = NULL,
+  start = NULL,
+  end = NULL,
+  as = NULL
+) {
   if (!file.exists(bwfile)) {
     stop("File does not exist: ", bwfile)
   }
@@ -77,7 +83,13 @@ as_granges <- function(x) {
 #' read_bigbed(bb, chrom = "chr10")
 #'
 #' @export
-read_bigbed <- function(bbfile, chrom = NULL, start = NULL, end = NULL, convert = TRUE) {
+read_bigbed <- function(
+  bbfile,
+  chrom = NULL,
+  start = NULL,
+  end = NULL,
+  convert = TRUE
+) {
   if (!file.exists(bbfile)) {
     stop("File does not exist: ", bbfile)
   }
@@ -118,7 +130,8 @@ bigbed_sql_fields <- function(bbfile) {
 
   unlist(
     lapply(
-      fields, function(line) {
+      fields,
+      function(line) {
         field <- sub("^\\s*\\S+\\s+(\\S+);.*", "\\1", line)
         field
       }
