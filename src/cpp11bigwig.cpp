@@ -130,7 +130,7 @@ writable::data_frame read_bigbed_cpp(std::string bbfname, sexp chrom, sexp start
     for(int i=0; i<nint; ++i) {
 
       int start = intervals->start[i] ;
-      int end = start + 1 ;
+      int end = intervals->end[i] ;  // Use actual end coordinate from bigBed
       std::string val = intervals->str[i] ;
 
       if (i == 0) {
