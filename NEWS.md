@@ -1,4 +1,4 @@
-# cpp11bigwig (development version)
+# cpp11bigwig 0.1.2
 
 * Fix parsing of bigBed end coordinates.
   
