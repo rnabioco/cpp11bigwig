@@ -1,6 +1,6 @@
 # Changelog
 
-## cpp11bigwig (development version)
+## cpp11bigwig 0.1.3
 
 - bigBed columns are now automatically coerced based on autoSql types
   ([\#12](https://github.com/rnabioco/cpp11bigwig/issues/12))
