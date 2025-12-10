@@ -2,6 +2,9 @@
 
 ## cpp11bigwig (development version)
 
+- bigBed columns are now automatically coerced based on autoSql types
+  ([\#12](https://github.com/rnabioco/cpp11bigwig/issues/12))
+
 ## cpp11bigwig 0.1.2
 
 CRAN release: 2025-08-18
