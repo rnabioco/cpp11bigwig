@@ -2,3 +2,7 @@
 .Rhistory
 .RData
 docs
+
+# Compiled object files
+src/libBigWig/*.o
+src/libBigWig/*.a
