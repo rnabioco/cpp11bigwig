@@ -12,3 +12,5 @@
 ^[\.]?air\.toml$
 ^\.vscode$
 ^\.clang-format$
+^\.claude$
+^CLAUDE\.md$
