@@ -64,11 +64,16 @@ as_granges <- function(x) {
 
 #' Read data from bigBed files.
 #'
+#' Columns are automatically typed based on the autoSql schema embedded
+#' in the bigBed file. Integer types (`uint`, `int`) become R integers,
+#' floating point types (`float`, `double`) become R doubles, and all
+#' other types (including array types like `int[blockCount]`) remain
+#' as character strings.
+#'
 #' @param bbfile filename for bigBed file
 #' @param chrom read data for specific chromosome
 #' @param start start position for data
 #' @param end end position for data
-#' @param convert convert bigBed values to individual columns
 #'
 #' @return \code{tibble}
 #'
@@ -87,8 +92,7 @@ read_bigbed <- function(
   bbfile,
   chrom = NULL,
   start = NULL,
-  end = NULL,
-  convert = TRUE
+  end = NULL
 ) {
   if (!file.exists(bbfile)) {
     stop("File does not exist: ", bbfile)
@@ -99,42 +103,5 @@ read_bigbed <- function(
   }
 
   res <- read_bigbed_cpp(bbfile, chrom, start, end)
-
-  if (!convert) {
-    return(as_tibble(res))
-  }
-
-  vals <- do.call(rbind, strsplit(res[["value"]], "\t"))
-  # merge chrom, start, end with new values
-  res_new <- cbind(res[, 1:3], vals)
-
-  fnames <- bigbed_sql_fields(bbfile)
-  # drop chrom, start, end
-  fnames <- fnames[-(1:3)]
-
-  colnames(res_new) <- c("chrom", "start", "end", fnames)
-  return(as_tibble(res_new))
-}
-
-#' @examples
-#' bb <- system.file("extdata", "test.bb", package = "cpp11bigwig")
-#' bigbed_sql_fields(bb)
-#'
-#' @noRd
-bigbed_sql_fields <- function(bbfile) {
-  res <- bigbed_sql_cpp(bbfile)
-
-  # parse the autoSql
-  lines <- unlist(strsplit(res, "\n"))
-  fields <- lines[grep(";", lines)]
-
-  unlist(
-    lapply(
-      fields,
-      function(line) {
-        field <- sub("^\\s*\\S+\\s+(\\S+);.*", "\\1", line)
-        field
-      }
-    )
-  )
+  as_tibble(res)
 }

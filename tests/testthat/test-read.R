@@ -95,3 +95,36 @@ test_that("read_bigbed correctly parses interval coordinates", {
   expect_true(all(region_data$chrom == "chr1"))
   expect_true(all(region_data$start >= 4797000 | region_data$end <= 4798000))
 })
+
+test_that("read_bigbed coerces columns based on autoSql types", {
+  bb_file <- test_path("data/test.bb")
+  bb_data <- read_bigbed(bb_file)
+
+  # Coordinate columns should be integers
+  expect_type(bb_data$start, "integer")
+  expect_type(bb_data$end, "integer")
+
+  # String columns should be character
+  expect_type(bb_data$chrom, "character")
+  expect_type(bb_data$name, "character")
+
+  # uint/int columns should be integer (based on BED12 autoSql schema)
+  expect_type(bb_data$score, "integer")
+  expect_type(bb_data$thickStart, "integer")
+  expect_type(bb_data$thickEnd, "integer")
+  expect_type(bb_data$reserved, "integer")
+  expect_type(bb_data$blockCount, "integer")
+
+  # char[1] should be character
+  expect_type(bb_data$strand, "character")
+
+  # Array types (int[blockCount]) should remain character (comma-separated)
+  expect_type(bb_data$blockSizes, "character")
+  expect_type(bb_data$chromStarts, "character")
+
+  # Verify integer values are correct (not NA or corrupted)
+  expect_true(all(bb_data$score >= 0))
+  expect_true(all(bb_data$blockCount > 0))
+  expect_true(all(bb_data$thickStart >= bb_data$start))
+  expect_true(all(bb_data$thickEnd <= bb_data$end))
+})
