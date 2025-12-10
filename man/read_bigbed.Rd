@@ -4,7 +4,7 @@
 \alias{read_bigbed}
 \title{Read data from bigBed files.}
 \usage{
-read_bigbed(bbfile, chrom = NULL, start = NULL, end = NULL, convert = TRUE)
+read_bigbed(bbfile, chrom = NULL, start = NULL, end = NULL)
 }
 \arguments{
 \item{bbfile}{filename for bigBed file}
@@ -14,14 +14,16 @@ read_bigbed(bbfile, chrom = NULL, start = NULL, end = NULL, convert = TRUE)
 \item{start}{start position for data}
 
 \item{end}{end position for data}
-
-\item{convert}{convert bigBed values to individual columns}
 }
 \value{
 \code{tibble}
 }
 \description{
-Read data from bigBed files.
+Columns are automatically typed based on the autoSql schema embedded
+in the bigBed file. Integer types (\code{uint}, \code{int}) become R integers,
+floating point types (\code{float}, \code{double}) become R doubles, and all
+other types (including array types like \code{int[blockCount]}) remain
+as character strings.
 }
 \examples{
 bb <- system.file("extdata", "test.bb", package = "cpp11bigwig")
