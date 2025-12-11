@@ -12,7 +12,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/rnabioco/cpp11bigwig/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/rnabioco/cpp11bigwig/blob/v0.1.3/DESCRIPTION)
 
 Hesselberth J (2025). *cpp11bigwig: Read bigWig and bigBed Files*. R
 package version 0.1.3, <https://rnabioco.github.io/cpp11bigwig/>.
