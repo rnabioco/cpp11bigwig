@@ -1,3 +1,5 @@
+# cpp11bigwig (development version)
+
 # cpp11bigwig 0.1.3
 
 * bigBed columns are now automatically coerced based on autoSql types (#12)
