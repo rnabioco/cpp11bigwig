@@ -1,5 +1,7 @@
 # Changelog
 
+## cpp11bigwig (development version)
+
 ## cpp11bigwig 0.1.3
 
 CRAN release: 2025-12-11
