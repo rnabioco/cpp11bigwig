@@ -12,7 +12,9 @@ read_bigwig(bwfile, chrom = NULL, start = NULL, end = NULL, as = NULL)
 
 - bwfile:
 
-  filename for bigWig file
+  path or URL for a bigWig file. Remote files (`http://`, `https://`,
+  `ftp://`) are supported when the package was installed with libcurl
+  available.
 
 - chrom:
 

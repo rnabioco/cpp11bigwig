@@ -16,7 +16,9 @@ read_bigbed(bbfile, chrom = NULL, start = NULL, end = NULL)
 
 - bbfile:
 
-  filename for bigBed file
+  path or URL for a bigBed file. Remote files (`http://`, `https://`,
+  `ftp://`) are supported when the package was installed with libcurl
+  available.
 
 - chrom:
 

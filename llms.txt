@@ -6,6 +6,7 @@ libBigWig <https://github.com/dpryan79/libBigWig>.
 ## Installation
 
 ``` r
+
 # Install development version from GitHub
 # install.packages("pak")
 pak::pak("rnabioco/cpp11bigwig")
@@ -14,6 +15,7 @@ pak::pak("rnabioco/cpp11bigwig")
 ## Usage
 
 ``` r
+
 library(cpp11bigwig)
 
 bw <- system.file("extdata", "test.bw", package = "cpp11bigwig")
