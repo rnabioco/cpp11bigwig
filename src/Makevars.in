@@ -1,0 +1,10 @@
+PKG_CPPFLAGS = @CURL_CFLAGS@ @NOCURL@
+PKG_LIBS = -L./libBigWig -lBigWig @CURL_LIBS@
+
+.PHONY: all libBigWig
+
+all: $(SHLIB)
+$(SHLIB): libBigWig
+
+libBigWig:
+		(cd libBigWig; $(MAKE) CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS) @CURL_CFLAGS@ @NOCURL@")

@@ -1,0 +1,28 @@
+#!/bin/sh
+# Detect libcurl to enable remote (http/https/ftp) bigWig/bigBed access.
+# If libcurl is unavailable, fall back to a local-only build (-DNOCURL).
+
+CURL_CFLAGS=""
+CURL_LIBS=""
+NOCURL="-DNOCURL"
+
+if curl-config --version >/dev/null 2>&1; then
+  CURL_CFLAGS=`curl-config --cflags`
+  CURL_LIBS=`curl-config --libs`
+  NOCURL=""
+elif pkg-config --exists libcurl 2>/dev/null; then
+  CURL_CFLAGS=`pkg-config --cflags libcurl`
+  CURL_LIBS=`pkg-config --libs libcurl`
+  NOCURL=""
+fi
+
+if [ -z "$NOCURL" ]; then
+  echo "* libcurl found: remote file access ENABLED"
+else
+  echo "* libcurl NOT found: building local-only (remote access disabled)"
+fi
+
+sed -e "s|@CURL_CFLAGS@|$CURL_CFLAGS|g" \
+    -e "s|@CURL_LIBS@|$CURL_LIBS|g" \
+    -e "s|@NOCURL@|$NOCURL|g" \
+    src/Makevars.in > src/Makevars

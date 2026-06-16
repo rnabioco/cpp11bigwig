@@ -7,7 +7,9 @@
 read_bigwig(bwfile, chrom = NULL, start = NULL, end = NULL, as = NULL)
 }
 \arguments{
-\item{bwfile}{filename for bigWig file}
+\item{bwfile}{path or URL for a bigWig file. Remote files
+(\verb{http://}, \verb{https://}, \verb{ftp://}) are supported when the package was
+installed with libcurl available.}
 
 \item{chrom}{read data for specific chromosome}
 
