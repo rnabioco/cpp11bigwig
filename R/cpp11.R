@@ -11,3 +11,7 @@ read_bigbed_cpp <- function(bbfname, chrom, start, end) {
 bigbed_sql_cpp <- function(bbfname) {
   .Call(`_cpp11bigwig_bigbed_sql_cpp`, bbfname)
 }
+
+bigwig_has_curl_cpp <- function() {
+  .Call(`_cpp11bigwig_bigwig_has_curl_cpp`)
+}

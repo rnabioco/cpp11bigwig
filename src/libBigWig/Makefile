@@ -1,5 +1,8 @@
 CC = gcc
 
+# NOTE: when built as part of the R package, CC and CFLAGS are supplied on the
+# command line by ../Makevars (which adds -DNOCURL only when libcurl is absent).
+# These defaults are for a standalone `make` in this directory.
 CFLAGS = -Wall -O3 -DNOCURL -fpic
 
 BW_OBJECTS = bwRead.o bwStats.o bwValues.o bwWrite.o io.o

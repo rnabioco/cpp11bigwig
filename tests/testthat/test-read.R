@@ -37,6 +37,33 @@ test_that("negative coords causes error", {
   expect_snapshot_error(read_bigwig(test_path("data/test.bw"), end = -1))
 })
 
+test_that("is_remote detects URLs", {
+  expect_true(is_remote("https://example.com/x.bw"))
+  expect_true(is_remote("http://example.com/x.bw"))
+  expect_true(is_remote("ftp://example.com/x.bw"))
+  expect_true(is_remote("HTTPS://EXAMPLE.COM/x.bw"))
+  expect_false(is_remote("/local/path/x.bw"))
+  expect_false(is_remote("x.bw"))
+})
+
+test_that("remote bigWig reads match local", {
+  skip_on_cran()
+  skip_if_not(bigwig_has_curl_cpp(), "built without libcurl")
+
+  url <- paste0(
+    "https://raw.githubusercontent.com/rnabioco/cpp11bigwig/",
+    "main/inst/extdata/test.bw"
+  )
+  local <- read_bigwig(system.file("extdata", "test.bw", package = "cpp11bigwig"))
+  # a network/remote-host failure should skip, not fail the suite
+  remote <- tryCatch(
+    read_bigwig(url),
+    error = function(e) skip(paste("remote fetch unavailable:", conditionMessage(e)))
+  )
+
+  expect_equal(remote, local)
+})
+
 test_that("read_bigbed correctly parses interval coordinates", {
   # Test with the sample bigBed file
   bb_file <- test_path("data/test.bb")

@@ -70,6 +70,10 @@ writable::data_frame read_bigwig_cpp(std::string bwfname, sexp chrom, sexp start
 
   bigWigFile_t* bwf = NULL;
 
+  // initialize libBigWig (allocates the read buffer required for remote files)
+  if (bwInit(1 << 17) != 0)
+    stop("Failed to initialize libBigWig\n");
+
   // NULL can be a CURL callback. see libBigWig demos
   bwf = bwOpen(bwfile, NULL, "r");
 
@@ -141,6 +145,10 @@ writable::data_frame read_bigwig_cpp(std::string bwfname, sexp chrom, sexp start
 writable::data_frame read_bigbed_cpp(std::string bbfname, sexp chrom, sexp start, sexp end) {
   const char* bbfile = bbfname.c_str();
   bigWigFile_t* bbf = NULL;
+
+  // initialize libBigWig (allocates the read buffer required for remote files)
+  if (bwInit(1 << 17) != 0)
+    stop("Failed to initialize libBigWig\n");
 
   // NULL can be a CURL callback. see libBigWig demos
   bbf = bbOpen(bbfile, NULL);
@@ -294,6 +302,10 @@ std::string bigbed_sql_cpp(std::string bbfname) {
 
   bigWigFile_t* bbf = NULL;
 
+  // initialize libBigWig (allocates the read buffer required for remote files)
+  if (bwInit(1 << 17) != 0)
+    stop("Failed to initialize libBigWig\n");
+
   // NULL can be a CURL callback. see libBigWig demos
   bbf = bwOpen(bbfile, NULL, "r");
 
@@ -306,6 +318,13 @@ std::string bigbed_sql_cpp(std::string bbfname) {
   free(sql);
 
   bwClose(bbf);
+  bwCleanup();
 
   return (sql_str);
+}
+
+// Report whether this build was compiled with libcurl (remote file) support.
+[[cpp11::register]]
+bool bigwig_has_curl_cpp() {
+  return LIBBIGWIG_CURL == 1;
 }

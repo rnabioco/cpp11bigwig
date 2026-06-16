@@ -1,0 +1,25 @@
+#!/bin/sh
+# Detect libcurl (via Rtools' bundled pkg-config) to enable remote
+# (http/https/ftp) bigWig/bigBed access. Fall back to a local-only
+# build (-DNOCURL) when libcurl is unavailable.
+
+CURL_CFLAGS=""
+CURL_LIBS=""
+NOCURL="-DNOCURL"
+
+if pkg-config --exists libcurl 2>/dev/null; then
+  CURL_CFLAGS=`pkg-config --cflags libcurl`
+  CURL_LIBS=`pkg-config --libs libcurl`
+  NOCURL=""
+fi
+
+if [ -z "$NOCURL" ]; then
+  echo "* libcurl found: remote file access ENABLED"
+else
+  echo "* libcurl NOT found: building local-only (remote access disabled)"
+fi
+
+sed -e "s|@CURL_CFLAGS@|$CURL_CFLAGS|g" \
+    -e "s|@CURL_LIBS@|$CURL_LIBS|g" \
+    -e "s|@NOCURL@|$NOCURL|g" \
+    src/Makevars.win.in > src/Makevars.win

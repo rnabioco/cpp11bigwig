@@ -1,6 +1,8 @@
 #' Read data from bigWig files.
 #'
-#' @param bwfile filename for bigWig file
+#' @param bwfile path or URL for a bigWig file. Remote files
+#'  (`http://`, `https://`, `ftp://`) are supported when the package was
+#'  installed with libcurl available.
 #' @param chrom read data for specific chromosome
 #' @param start start position for data
 #' @param end end position for data
@@ -31,9 +33,7 @@ read_bigwig <- function(
   end = NULL,
   as = NULL
 ) {
-  if (!file.exists(bwfile)) {
-    stop("File does not exist: ", bwfile)
-  }
+  check_bigwig_file(bwfile)
 
   if ((!is.null(start) && start < 0) || (!is.null(end) && end < 0)) {
     stop("`start` and `end` must both be >= 0")
@@ -49,6 +49,28 @@ read_bigwig <- function(
     return(as_granges(res))
   } else {
     return(as_tibble(res))
+  }
+}
+
+#' is `x` a remote (http/https/ftp) URL?
+#' @noRd
+is_remote <- function(x) {
+  grepl("^(https?|ftp)://", x, ignore.case = TRUE)
+}
+
+#' validate a bigWig/bigBed file path or URL
+#' @noRd
+check_bigwig_file <- function(file) {
+  if (is_remote(file)) {
+    if (!bigwig_has_curl_cpp()) {
+      stop(
+        "Remote files require libcurl, which was not available when ",
+        "cpp11bigwig was installed. Reinstall with libcurl development ",
+        "headers to enable remote access."
+      )
+    }
+  } else if (!file.exists(file)) {
+    stop("File does not exist: ", file)
   }
 }
 
@@ -70,7 +92,9 @@ as_granges <- function(x) {
 #' other types (including array types like `int[blockCount]`) remain
 #' as character strings.
 #'
-#' @param bbfile filename for bigBed file
+#' @param bbfile path or URL for a bigBed file. Remote files
+#'  (`http://`, `https://`, `ftp://`) are supported when the package was
+#'  installed with libcurl available.
 #' @param chrom read data for specific chromosome
 #' @param start start position for data
 #' @param end end position for data
@@ -94,9 +118,7 @@ read_bigbed <- function(
   start = NULL,
   end = NULL
 ) {
-  if (!file.exists(bbfile)) {
-    stop("File does not exist: ", bbfile)
-  }
+  check_bigwig_file(bbfile)
 
   if ((!is.null(start) && start < 0) || (!is.null(end) && end < 0)) {
     stop("`start` and `end` must both be >= 0")

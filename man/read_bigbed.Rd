@@ -7,7 +7,9 @@
 read_bigbed(bbfile, chrom = NULL, start = NULL, end = NULL)
 }
 \arguments{
-\item{bbfile}{filename for bigBed file}
+\item{bbfile}{path or URL for a bigBed file. Remote files
+(\verb{http://}, \verb{https://}, \verb{ftp://}) are supported when the package was
+installed with libcurl available.}
 
 \item{chrom}{read data for specific chromosome}
 

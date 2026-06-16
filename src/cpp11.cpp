@@ -26,12 +26,20 @@ extern "C" SEXP _cpp11bigwig_bigbed_sql_cpp(SEXP bbfname) {
     return cpp11::as_sexp(bigbed_sql_cpp(cpp11::as_cpp<cpp11::decay_t<std::string>>(bbfname)));
   END_CPP11
 }
+// cpp11bigwig.cpp
+bool bigwig_has_curl_cpp();
+extern "C" SEXP _cpp11bigwig_bigwig_has_curl_cpp() {
+  BEGIN_CPP11
+    return cpp11::as_sexp(bigwig_has_curl_cpp());
+  END_CPP11
+}
 
 extern "C" {
 static const R_CallMethodDef CallEntries[] = {
-    {"_cpp11bigwig_bigbed_sql_cpp",  (DL_FUNC) &_cpp11bigwig_bigbed_sql_cpp,  1},
-    {"_cpp11bigwig_read_bigbed_cpp", (DL_FUNC) &_cpp11bigwig_read_bigbed_cpp, 4},
-    {"_cpp11bigwig_read_bigwig_cpp", (DL_FUNC) &_cpp11bigwig_read_bigwig_cpp, 4},
+    {"_cpp11bigwig_bigbed_sql_cpp",      (DL_FUNC) &_cpp11bigwig_bigbed_sql_cpp,      1},
+    {"_cpp11bigwig_bigwig_has_curl_cpp", (DL_FUNC) &_cpp11bigwig_bigwig_has_curl_cpp, 0},
+    {"_cpp11bigwig_read_bigbed_cpp",     (DL_FUNC) &_cpp11bigwig_read_bigbed_cpp,     4},
+    {"_cpp11bigwig_read_bigwig_cpp",     (DL_FUNC) &_cpp11bigwig_read_bigwig_cpp,     4},
     {NULL, NULL, 0}
 };
 }

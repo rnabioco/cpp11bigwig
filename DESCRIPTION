@@ -21,8 +21,10 @@ Imports:
     tibble
 Suggests: 
     testthat (>= 3.0.0)
-LinkingTo: 
+LinkingTo:
     cpp11
+SystemRequirements: libcurl (optional, for remote file access): libcurl-devel
+    (rpm) or libcurl4-openssl-dev (deb)
 Config/Needs/website: rnabioco/rbitemplate
 Config/testthat/edition: 3
 Encoding: UTF-8
