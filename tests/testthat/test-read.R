@@ -48,7 +48,6 @@ test_that("is_remote detects URLs", {
 
 test_that("remote bigWig reads match local", {
   skip_on_cran()
-  skip_if_offline()
   skip_if_not(bigwig_has_curl_cpp(), "built without libcurl")
 
   url <- paste0(
