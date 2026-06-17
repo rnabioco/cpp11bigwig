@@ -30,7 +30,7 @@ CURLcode urlFetchData(URL_t *URL, unsigned long bufSize) {
     else URL->filePos = 0;
 
     URL->bufPos = URL->bufLen = 0; //Otherwise, we can't copy anything into the buffer!
-//     sprintf(range,"%lu-%lu", URL->filePos, URL->filePos+bufSize-1);
+    snprintf(range, sizeof(range), "%llu-%llu", (unsigned long long) URL->filePos, (unsigned long long) (URL->filePos+bufSize-1));
     rv = curl_easy_setopt(URL->x.curl, CURLOPT_RANGE, range);
     if(rv != CURLE_OK) {
 //         fprintf(stderr, "[urlFetchData] Couldn't set the range (%s)\n", range);
@@ -138,7 +138,7 @@ CURLcode urlSeek(URL_t *URL, size_t pos) {
             URL->bufLen = 0; //Otherwise, filePos will get incremented on the next read!
             URL->bufPos = 0;
             //Maybe this works for FTP?
-//             sprintf(range,"%lu-%lu", pos, pos+URL->bufSize-1);
+            snprintf(range, sizeof(range), "%llu-%llu", (unsigned long long) pos, (unsigned long long) (pos+URL->bufSize-1));
             rv = curl_easy_setopt(URL->x.curl, CURLOPT_RANGE, range);
             if(rv != CURLE_OK) {
 //                 fprintf(stderr, "[urlSeek] Couldn't set the range (%s)\n", range);
@@ -220,7 +220,7 @@ URL_t *urlOpen(const char *fname, CURLcode (*callBack)(CURL*), const char *mode)
                 goto error;
             }
             //Set the range, which doesn't do anything for HTTP
-//             sprintf(range, "0-%lu", URL->bufSize-1);
+            snprintf(range, sizeof(range), "0-%llu", (unsigned long long) (URL->bufSize-1));
             if(curl_easy_setopt(URL->x.curl, CURLOPT_RANGE, range) != CURLE_OK) {
 //                 fprintf(stderr, "[urlOpen] Couldn't set CURLOPT_RANGE (%s)!\n", range);
                 goto error;

@@ -64,6 +64,32 @@ test_that("remote bigWig reads match local", {
   expect_equal(remote, local)
 })
 
+test_that("remote bigWig larger than the read buffer reads a windowed range (#18)", {
+  # Regression test: the HTTP Range header was not being set, so servers
+  # returned the entire file. Files larger than the internal read buffer
+  # (1 << 17 bytes) overran it and crashed R or failed to open. This reads a
+  # small window from an 81 MB file, which only succeeds with working range
+  # requests (it must not download the whole file).
+  skip_on_cran()
+  skip_if_not(bigwig_has_curl_cpp(), "built without libcurl")
+
+  url <- "https://genome.ucsc.edu/goldenPath/help/examples/bigWigExample.bw"
+  remote <- tryCatch(
+    read_bigwig(url, chrom = "chr21", start = 33031597, end = 33041570),
+    error = function(e) skip(paste("remote fetch unavailable:", conditionMessage(e)))
+  )
+
+  expect_s3_class(remote, "tbl_df")
+  expect_true(nrow(remote) > 0)
+  # a windowed query must return only the window, not the whole 81 MB file
+  expect_true(all(remote$chrom == "chr21"))
+  expect_true(min(remote$start) >= 33031597)
+  expect_true(max(remote$end) <= 33041570)
+  # known values from this stable UCSC example file
+  expect_equal(remote$start[1], 33031597L)
+  expect_equal(remote$value[1], 40)
+})
+
 test_that("read_bigbed correctly parses interval coordinates", {
   # Test with the sample bigBed file
   bb_file <- test_path("data/test.bb")
