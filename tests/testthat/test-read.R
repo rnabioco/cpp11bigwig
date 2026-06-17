@@ -28,6 +28,36 @@ test_that("results have expected shape", {
   expect_equal(nrow(res), 3)
 })
 
+test_that("as = 'Rle' returns a per-base run-length vector", {
+  bw <- test_path("data/test.bw")
+
+  # values are stored as 32-bit floats, so compare with tolerance
+  tol <- 1e-6
+
+  # windowed query: length equals end - start, gaps filled with 0
+  r <- read_bigwig(bw, chrom = "1", start = 0, end = 5, as = "Rle")
+  expect_s4_class(r, "Rle")
+  expect_equal(length(r), 5L)
+  expect_equal(as.numeric(r), c(0.1, 0.2, 0.3, 0, 0), tolerance = tol)
+
+  # uncovered bases inside the data range are also filled
+  r <- read_bigwig(bw, chrom = "1", start = 98, end = 103, as = "Rle")
+  expect_equal(as.numeric(r), c(0, 0, 1.4, 1.4, 1.4), tolerance = tol)
+
+  # fill = NA marks uncovered bases as missing
+  r <- read_bigwig(bw, chrom = "1", start = 0, end = 5, as = "Rle", fill = NA)
+  expect_equal(as.numeric(r), c(0.1, 0.2, 0.3, NA, NA), tolerance = tol)
+
+  # without an explicit window the Rle spans the data extent of the chrom
+  r <- read_bigwig(bw, chrom = "1", as = "Rle")
+  expect_equal(length(r), 151L)
+
+  # multiple chromosomes return a named RleList
+  rl <- read_bigwig(bw, as = "Rle")
+  expect_s4_class(rl, "RleList")
+  expect_equal(names(rl), c("1", "10"))
+})
+
 test_that("missing file causes error", {
   expect_snapshot_error(read_bigwig("missing.bw"))
 })

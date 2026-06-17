@@ -4,7 +4,14 @@
 \alias{read_bigwig}
 \title{Read data from bigWig files.}
 \usage{
-read_bigwig(bwfile, chrom = NULL, start = NULL, end = NULL, as = NULL)
+read_bigwig(
+  bwfile,
+  chrom = NULL,
+  start = NULL,
+  end = NULL,
+  as = NULL,
+  fill = 0
+)
 }
 \arguments{
 \item{bwfile}{path or URL for a bigWig file. Remote files
@@ -17,14 +24,29 @@ installed with libcurl available.}
 
 \item{end}{end position for data}
 
-\item{as}{return data as a specific type.
-The default is a tibble (\code{tbl}) or GRanges (\code{gr})}
+\item{as}{return data as a specific type. One of \code{"tbl"} (the default
+tibble), \code{"GRanges"}, or \code{"Rle"}. \code{"Rle"} returns a per-base
+run-length-encoded vector spanning the requested range (see Details).}
+
+\item{fill}{value used for bases with no data when \code{as = "Rle"}.
+Defaults to \code{0} (the convention for coverage); use \code{NA} to mark
+uncovered bases as missing. Ignored for other \code{as} values.}
 }
 \value{
-\code{tibble}
+A \code{tibble}, \code{GRanges}, or \code{Rle}/\code{RleList} depending on \code{as}.
 }
 \description{
 Read data from bigWig files.
+}
+\details{
+When \code{as = "Rle"}, the result is an \link[S4Vectors:Rle-class]{S4Vectors::Rle} whose expanded
+length equals the queried range, i.e. \code{end - start} when both are
+supplied, otherwise the extent of the returned data for each
+chromosome. Bases with no data in the file are set to \code{fill}. bigWig
+coordinates are 0-based and half-open, so element \code{i} corresponds to
+genomic position \code{start + i - 1}. A single-chromosome query returns a
+bare \code{Rle}; a multi-chromosome query returns a named
+\link[IRanges:AtomicList-class]{IRanges::RleList}.
 }
 \examples{
 bw <- system.file("extdata", "test.bw", package = "cpp11bigwig")
@@ -36,6 +58,8 @@ read_bigwig(bw, chrom = "10")
 read_bigwig(bw, chrom = "1", start = 100, end = 130)
 
 read_bigwig(bw, as = "GRanges")
+
+read_bigwig(bw, chrom = "1", start = 100, end = 130, as = "Rle")
 
 }
 \seealso{
