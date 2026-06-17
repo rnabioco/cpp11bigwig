@@ -40,7 +40,8 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="cpp11bigwig-development-version">cpp11bigwig (development version)<a class="anchor" aria-label="anchor" href="#cpp11bigwig-development-version"></a></h2>
-</div>
+<ul><li>Fix remote access to large bigWig/bigBed files. The HTTP <code>Range</code> header was not being set, so servers returned the entire file, crashing R or failing to open files larger than the read buffer (<a href="https://github.com/rnabioco/cpp11bigwig/issues/18" class="external-link">#18</a>).</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.3" id="cpp11bigwig-013">cpp11bigwig 0.1.3<a class="anchor" aria-label="anchor" href="#cpp11bigwig-013"></a></h2><p class="text-muted">CRAN release: 2025-12-11</p>
 <ul><li>bigBed columns are now automatically coerced based on autoSql types (<a href="https://github.com/rnabioco/cpp11bigwig/issues/12" class="external-link">#12</a>)</li>

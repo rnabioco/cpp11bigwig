@@ -2,6 +2,11 @@
 
 ## cpp11bigwig (development version)
 
+- Fix remote access to large bigWig/bigBed files. The HTTP `Range`
+  header was not being set, so servers returned the entire file,
+  crashing R or failing to open files larger than the read buffer
+  ([\#18](https://github.com/rnabioco/cpp11bigwig/issues/18)).
+
 ## cpp11bigwig 0.1.3
 
 CRAN release: 2025-12-11
