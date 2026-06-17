@@ -1,5 +1,10 @@
 # cpp11bigwig (development version)
 
+* `read_bigwig()` gains `as = "Rle"`, returning a per-base run-length-encoded
+  vector spanning the queried range (an `Rle` for a single chromosome, or a
+  named `RleList` for several). Uncovered bases are set to the `fill` value
+  (default `0`; use `NA` to mark them missing) (#18).
+
 * Fix remote access to large bigWig/bigBed files. The HTTP `Range` header was
   not being set, so servers returned the entire file, crashing R or failing to
   open files larger than the read buffer (#18).
