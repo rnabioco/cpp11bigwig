@@ -1,5 +1,5 @@
 PKG_CPPFLAGS = @CURL_CFLAGS@ @NOCURL@
-PKG_LIBS = -L./libBigWig -lBigWig @CURL_LIBS@
+PKG_LIBS = -L./libBigWig -lBigWig @CURL_LIBS@ -lz
 
 .PHONY: all libBigWig
 
