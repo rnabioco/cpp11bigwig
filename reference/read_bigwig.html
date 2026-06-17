@@ -45,7 +45,14 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">read_bigwig</span><span class="op">(</span><span class="va">bwfile</span>, chrom <span class="op">=</span> <span class="cn">NULL</span>, start <span class="op">=</span> <span class="cn">NULL</span>, end <span class="op">=</span> <span class="cn">NULL</span>, as <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">read_bigwig</span><span class="op">(</span></span>
+<span>  <span class="va">bwfile</span>,</span>
+<span>  chrom <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  start <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  end <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  as <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  fill <span class="op">=</span> <span class="fl">0</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -71,13 +78,31 @@ installed with libcurl available.</p></dd>
 
 
 <dt id="arg-as">as<a class="anchor" aria-label="anchor" href="#arg-as"></a></dt>
-<dd><p>return data as a specific type.
-The default is a tibble (<code>tbl</code>) or GRanges (<code>gr</code>)</p></dd>
+<dd><p>return data as a specific type. One of <code>"tbl"</code> (the default
+tibble), <code>"GRanges"</code>, or <code>"Rle"</code>. <code>"Rle"</code> returns a per-base
+run-length-encoded vector spanning the requested range (see Details).</p></dd>
+
+
+<dt id="arg-fill">fill<a class="anchor" aria-label="anchor" href="#arg-fill"></a></dt>
+<dd><p>value used for bases with no data when <code>as = "Rle"</code>.
+Defaults to <code>0</code> (the convention for coverage); use <code>NA</code> to mark
+uncovered bases as missing. Ignored for other <code>as</code> values.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p><code>tibble</code></p>
+    <p>A <code>tibble</code>, <code>GRanges</code>, or <code>Rle</code>/<code>RleList</code> depending on <code>as</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>When <code>as = "Rle"</code>, the result is an <a href="https://rdrr.io/pkg/S4Vectors/man/Rle-class.html" class="external-link">S4Vectors::Rle</a> whose expanded
+length equals the queried range, i.e. <code>end - start</code> when both are
+supplied, otherwise the extent of the returned data for each
+chromosome. Bases with no data in the file are set to <code>fill</code>. bigWig
+coordinates are 0-based and half-open, so element <code>i</code> corresponds to
+genomic position <code>start + i - 1</code>. A single-chromosome query returns a
+bare <code>Rle</code>; a multi-chromosome query returns a named
+<a href="https://rdrr.io/pkg/IRanges/man/AtomicList-class.html" class="external-link">IRanges::RleList</a>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -124,6 +149,11 @@ The default is a tibble (<code>tbl</code>) or GRanges (<code>gr</code>)</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [6]       10   200-300      * |       2.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   -------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   seqinfo: 2 sequences from an unspecified genome; no seqlengths</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu">read_bigwig</span><span class="op">(</span><span class="va">bw</span>, chrom <span class="op">=</span> <span class="st">"1"</span>, start <span class="op">=</span> <span class="fl">100</span>, end <span class="op">=</span> <span class="fl">130</span>, as <span class="op">=</span> <span class="st">"Rle"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> numeric-Rle of length 30 with 1 run</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Lengths:  30</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Values : 1.4</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
