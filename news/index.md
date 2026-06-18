@@ -1,6 +1,6 @@
 # Changelog
 
-## cpp11bigwig (development version)
+## cpp11bigwig 0.2.0
 
 - [`read_bigwig()`](https://rnabioco.github.io/cpp11bigwig/reference/read_bigwig.md)
   gains `as = "Rle"`, returning a per-base run-length-encoded vector
