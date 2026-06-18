@@ -39,14 +39,14 @@ A \code{tibble}, \code{GRanges}, or \code{Rle}/\code{RleList} depending on \code
 Read data from bigWig files.
 }
 \details{
-When \code{as = "Rle"}, the result is an \link[S4Vectors:Rle-class]{S4Vectors::Rle} whose expanded
+When \code{as = "Rle"}, the result is an \link[S4Vectors:Rle]{S4Vectors::Rle} whose expanded
 length equals the queried range, i.e. \code{end - start} when both are
 supplied, otherwise the extent of the returned data for each
 chromosome. Bases with no data in the file are set to \code{fill}. bigWig
 coordinates are 0-based and half-open, so element \code{i} corresponds to
 genomic position \code{start + i - 1}. A single-chromosome query returns a
 bare \code{Rle}; a multi-chromosome query returns a named
-\link[IRanges:AtomicList-class]{IRanges::RleList}.
+\link[IRanges:RleList]{IRanges::RleList}.
 }
 \examples{
 bw <- system.file("extdata", "test.bw", package = "cpp11bigwig")

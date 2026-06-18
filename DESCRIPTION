@@ -30,5 +30,5 @@ Config/Needs/website: rnabioco/rbitemplate
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: TRUE
-RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.0.0
