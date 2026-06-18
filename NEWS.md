@@ -1,4 +1,4 @@
-# cpp11bigwig (development version)
+# cpp11bigwig 0.2.0
 
 * `read_bigwig()` gains `as = "Rle"`, returning a per-base run-length-encoded
   vector spanning the queried range (an `Rle` for a single chromosome, or a
