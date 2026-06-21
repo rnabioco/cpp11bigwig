@@ -1,5 +1,19 @@
 # cpp11bigwig (development version)
 
+* Multi-range queries now open the file once per call instead of re-opening it
+  for every range. The per-range loop moved into C++, so a query of many ranges
+  (and especially a remote file, where each open re-fetches headers) is
+  substantially faster.
+
+* `read_bigbed()` no longer crashes on a bigBed file with no embedded autoSql
+  schema. `bbGetSQL()` returns `NULL` in that case, and constructing a
+  `std::string` from it was undefined behavior; such files now read back their
+  `chrom`/`start`/`end` columns with no extra typed fields.
+
+* The bigWig/bigBed readers now release the libBigWig file handle and read
+  buffer when they error out (e.g. on an unreadable file or a failed interval
+  query), rather than leaking them.
+
 * Fix a CRAN `gcc-ASAN` global-buffer-overflow reported when reading bigBed
   files. The autoSql schema parser no longer uses `std::regex` (which tripped
   an AddressSanitizer error inside libstdc++); it now parses the schema with

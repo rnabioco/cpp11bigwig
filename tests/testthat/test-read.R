@@ -280,6 +280,24 @@ test_that("read_bigbed correctly parses interval coordinates", {
   expect_true(all(region_data$start >= 4797000 | region_data$end <= 4798000))
 })
 
+test_that("read_bigbed handles a bigBed with no embedded autoSql schema", {
+  # Regression: bbGetSQL() returns NULL when a bigBed has no autoSql schema
+  # (sqlOffset == 0). Constructing a std::string from NULL previously crashed
+  # R. test_noschema.bb is a bed3 file with its header sqlOffset zeroed.
+  bb <- test_path("data/test_noschema.bb")
+
+  res <- read_bigbed(bb)
+  expect_s3_class(res, "tbl_df")
+  # with no schema there are no extra typed fields: just chrom/start/end
+  expect_equal(names(res), c("chrom", "start", "end"))
+  expect_gt(nrow(res), 0)
+  expect_true(all(res$end > res$start))
+
+  # windowed / per-chrom queries still work without a schema
+  chr1 <- read_bigbed(bb, chrom = "chr1")
+  expect_true(all(chr1$chrom == "chr1"))
+})
+
 test_that("read_bigbed coerces columns based on autoSql types", {
   bb_file <- test_path("data/test.bb")
   bb_data <- read_bigbed(bb_file)

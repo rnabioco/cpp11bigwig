@@ -6,17 +6,17 @@
 #include <R_ext/Visibility.h>
 
 // cpp11bigwig.cpp
-writable::data_frame read_bigwig_cpp(std::string bwfname, sexp chrom, sexp start, sexp end);
-extern "C" SEXP _cpp11bigwig_read_bigwig_cpp(SEXP bwfname, SEXP chrom, SEXP start, SEXP end) {
+writable::list read_bigwig_cpp(std::string bwfname, strings chroms_r, integers starts_r, integers ends_r);
+extern "C" SEXP _cpp11bigwig_read_bigwig_cpp(SEXP bwfname, SEXP chroms_r, SEXP starts_r, SEXP ends_r) {
   BEGIN_CPP11
-    return cpp11::as_sexp(read_bigwig_cpp(cpp11::as_cpp<cpp11::decay_t<std::string>>(bwfname), cpp11::as_cpp<cpp11::decay_t<sexp>>(chrom), cpp11::as_cpp<cpp11::decay_t<sexp>>(start), cpp11::as_cpp<cpp11::decay_t<sexp>>(end)));
+    return cpp11::as_sexp(read_bigwig_cpp(cpp11::as_cpp<cpp11::decay_t<std::string>>(bwfname), cpp11::as_cpp<cpp11::decay_t<strings>>(chroms_r), cpp11::as_cpp<cpp11::decay_t<integers>>(starts_r), cpp11::as_cpp<cpp11::decay_t<integers>>(ends_r)));
   END_CPP11
 }
 // cpp11bigwig.cpp
-writable::data_frame read_bigbed_cpp(std::string bbfname, sexp chrom, sexp start, sexp end);
-extern "C" SEXP _cpp11bigwig_read_bigbed_cpp(SEXP bbfname, SEXP chrom, SEXP start, SEXP end) {
+writable::list read_bigbed_cpp(std::string bbfname, strings chroms_r, integers starts_r, integers ends_r);
+extern "C" SEXP _cpp11bigwig_read_bigbed_cpp(SEXP bbfname, SEXP chroms_r, SEXP starts_r, SEXP ends_r) {
   BEGIN_CPP11
-    return cpp11::as_sexp(read_bigbed_cpp(cpp11::as_cpp<cpp11::decay_t<std::string>>(bbfname), cpp11::as_cpp<cpp11::decay_t<sexp>>(chrom), cpp11::as_cpp<cpp11::decay_t<sexp>>(start), cpp11::as_cpp<cpp11::decay_t<sexp>>(end)));
+    return cpp11::as_sexp(read_bigbed_cpp(cpp11::as_cpp<cpp11::decay_t<std::string>>(bbfname), cpp11::as_cpp<cpp11::decay_t<strings>>(chroms_r), cpp11::as_cpp<cpp11::decay_t<integers>>(starts_r), cpp11::as_cpp<cpp11::decay_t<integers>>(ends_r)));
   END_CPP11
 }
 // cpp11bigwig.cpp

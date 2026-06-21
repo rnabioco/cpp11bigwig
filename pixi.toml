@@ -27,6 +27,7 @@ make = "*"
 pkg-config = "*"
 libcurl = "*"
 zlib = "*"
+clang-format = "*"
 
 [tasks]
 # decor is required by cpp11::cpp_register() (run during devtools::document/
@@ -36,3 +37,6 @@ document = { cmd = "Rscript -e 'devtools::document()'", depends-on = ["bootstrap
 test = { cmd = "Rscript -e 'devtools::test()'", depends-on = ["bootstrap"] }
 check = { cmd = "Rscript -e 'devtools::check()'", depends-on = ["bootstrap"] }
 install = "R CMD INSTALL --no-multiarch ."
+# Format the package's own C++ sources. Vendored src/libBigWig/ and the
+# cpp11-generated src/cpp11.cpp are excluded via .clang-format-ignore.
+format-cpp = "clang-format -i src/cpp11bigwig.cpp"

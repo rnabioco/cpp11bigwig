@@ -87,57 +87,58 @@ read_bigwig <- function(
   }
 
   ranges <- normalize_ranges(chrom, start, end)
+  multi <- !is.null(ranges)
+  if (!multi) {
+    ranges <- single_range(chrom, start, end)
+  }
+  check_ranges_nonneg(ranges)
 
-  # multiple ranges: query each, then combine
-  if (!is.null(ranges)) {
-    check_ranges_nonneg(ranges)
-    reslist <- query_ranges(read_bigwig_cpp, bwfile, ranges)
+  # one C++ call opens the file once and returns a per-range list of frames
+  reslist <- read_ranges(read_bigwig_cpp, bwfile, ranges)
 
-    if (!is.null(as) && as == "Rle") {
-      rles <- lapply(seq_len(nrow(ranges)), function(i) {
-        x <- reslist[[i]]
-        lo <- if (!is.na(ranges$start[i])) {
-          ranges$start[i]
-        } else if (length(x$start)) min(x$start) else 0L
-        hi <- if (!is.na(ranges$end[i])) {
-          ranges$end[i]
-        } else if (length(x$end)) max(x$end) else lo
-        runs_to_rle(x$start, x$end, x$value, lo, hi, fill)
-      })
-      # a single requested range collapses to a bare Rle
-      if (length(rles) == 1L) {
-        return(rles[[1]])
+  if (!is.null(as) && as == "Rle") {
+    # single range / whole file: split by chromosome (bare Rle, or an
+    # RleList named by chromosome when several chroms are present)
+    if (!multi) {
+      return(as_rle(reslist[[1]], start, end, fill))
+    }
+    # multiple ranges: one Rle per requested range
+    rles <- lapply(seq_len(nrow(ranges)), function(i) {
+      x <- reslist[[i]]
+      lo <- if (!is.na(ranges$start[i])) {
+        ranges$start[i]
+      } else if (length(x$start)) {
+        min(x$start)
+      } else {
+        0L
       }
-      names(rles) <- sprintf(
-        "%s:%s-%s",
-        ranges$chrom,
-        format(ranges$start, trim = TRUE),
-        format(ranges$end, trim = TRUE)
-      )
-      return(RleList(rles, compress = FALSE))
+      hi <- if (!is.na(ranges$end[i])) {
+        ranges$end[i]
+      } else if (length(x$end)) {
+        max(x$end)
+      } else {
+        lo
+      }
+      runs_to_rle(x$start, x$end, x$value, lo, hi, fill)
+    })
+    # a single requested range collapses to a bare Rle
+    if (length(rles) == 1L) {
+      return(rles[[1]])
     }
-
-    combined <- do.call(rbind, reslist)
-    if (!is.null(as) && as == "GRanges") {
-      return(as_granges(combined))
-    }
-    return(as_tibble(combined))
+    names(rles) <- sprintf(
+      "%s:%s-%s",
+      ranges$chrom,
+      format(ranges$start, trim = TRUE),
+      format(ranges$end, trim = TRUE)
+    )
+    return(RleList(rles, compress = FALSE))
   }
 
-  # single range / whole-file path
-  if ((!is.null(start) && start < 0) || (!is.null(end) && end < 0)) {
-    stop("`start` and `end` must both be >= 0")
-  }
-
-  res <- read_bigwig_cpp(bwfile, chrom, start, end)
-
+  combined <- do.call(rbind, reslist)
   if (!is.null(as) && as == "GRanges") {
-    return(as_granges(res))
-  } else if (!is.null(as) && as == "Rle") {
-    return(as_rle(res, start, end, fill))
-  } else {
-    return(as_tibble(res))
+    return(as_granges(combined))
   }
+  as_tibble(combined)
 }
 
 #' normalize range inputs into a data.frame of (chrom, start, end) rows,
@@ -171,7 +172,9 @@ normalize_ranges <- function(chrom, start, end) {
       return(rep(x, n))
     }
     if (length(x) != n) {
-      stop("`chrom`, `start`, and `end` must have the same length (or length 1)")
+      stop(
+        "`chrom`, `start`, and `end` must have the same length (or length 1)"
+      )
     }
     x
   }
@@ -194,17 +197,30 @@ check_ranges_nonneg <- function(ranges) {
   }
 }
 
-#' call a C++ reader once per range, mapping NA back to NULL
+#' build the single-row range frame for the whole-file / single-query path,
+#' mapping unspecified (NULL) chrom/start/end to NA (every chromosome / the
+#' chromosome bounds in C++).
 #' @noRd
-query_ranges <- function(fun, file, ranges) {
-  lapply(seq_len(nrow(ranges)), function(i) {
-    fun(
-      file,
-      if (is.na(ranges$chrom[i])) NULL else ranges$chrom[i],
-      if (is.na(ranges$start[i])) NULL else as.integer(ranges$start[i]),
-      if (is.na(ranges$end[i])) NULL else as.integer(ranges$end[i])
-    )
-  })
+single_range <- function(chrom, start, end) {
+  data.frame(
+    chrom = if (is.null(chrom)) NA_character_ else as.character(chrom),
+    start = if (is.null(start)) NA_real_ else as.numeric(start),
+    end = if (is.null(end)) NA_real_ else as.numeric(end),
+    stringsAsFactors = FALSE
+  )
+}
+
+#' call a vectorized C++ reader once for all ranges; NA chrom selects every
+#' chromosome and NA start/end default to the chromosome bounds. Returns a
+#' list with one data frame per range.
+#' @noRd
+read_ranges <- function(fun, file, ranges) {
+  fun(
+    file,
+    as.character(ranges$chrom),
+    as.integer(ranges$start),
+    as.integer(ranges$end)
+  )
 }
 
 #' is `x` a remote (http/https/ftp) URL?
@@ -352,18 +368,12 @@ read_bigbed <- function(
   check_bigwig_file(bbfile)
 
   ranges <- normalize_ranges(chrom, start, end)
-
-  # multiple ranges: query each, then combine
-  if (!is.null(ranges)) {
-    check_ranges_nonneg(ranges)
-    reslist <- query_ranges(read_bigbed_cpp, bbfile, ranges)
-    return(as_tibble(do.call(rbind, reslist)))
+  if (is.null(ranges)) {
+    ranges <- single_range(chrom, start, end)
   }
+  check_ranges_nonneg(ranges)
 
-  if ((!is.null(start) && start < 0) || (!is.null(end) && end < 0)) {
-    stop("`start` and `end` must both be >= 0")
-  }
-
-  res <- read_bigbed_cpp(bbfile, chrom, start, end)
-  as_tibble(res)
+  # one C++ call opens the file once and returns a per-range list of frames
+  reslist <- read_ranges(read_bigbed_cpp, bbfile, ranges)
+  as_tibble(do.call(rbind, reslist))
 }
