@@ -130,8 +130,45 @@ read_bigwig(bw, chrom = "1", start = 100, end = 130, as = "Rle")
 #>   Lengths:  30
 #>   Values : 1.4
 
-# several ranges at once
+# query several ranges in one call with equal-length vectors
 read_bigwig(bw, chrom = c("1", "10"), start = c(0, 0), end = c(50, 50))
+#> # A tibble: 3 × 4
+#>   chrom start   end value
+#>   <chr> <int> <int> <dbl>
+#> 1 1         0     1 0.100
+#> 2 1         1     2 0.200
+#> 3 1         2     3 0.300
+
+# multiple windows on the same chromosome (chrom recycles)
+read_bigwig(bw, chrom = "1", start = c(0, 100), end = c(50, 130))
+#> # A tibble: 4 × 4
+#>   chrom start   end value
+#>   <chr> <int> <int> <dbl>
+#> 1 1         0     1 0.100
+#> 2 1         1     2 0.200
+#> 3 1         2     3 0.300
+#> 4 1       100   130 1.40 
+
+# a multi-range "Rle" query returns a named RleList, one element per range
+read_bigwig(bw, chrom = "1", start = c(0, 100), end = c(50, 130), as = "Rle")
+#> RleList of length 2
+#> $`1:0-50`
+#> numeric-Rle of length 50 with 4 runs
+#>   Lengths:   1   1   1  47
+#>   Values : 0.1 0.2 0.3 0.0
+#> 
+#> $`1:100-130`
+#> numeric-Rle of length 30 with 1 run
+#>   Lengths:  30
+#>   Values : 1.4
+#> 
+
+# pass a GRanges of regions; 1-based coords are converted automatically
+gr <- GenomicRanges::GRanges(
+  c("1", "10"),
+  IRanges::IRanges(start = c(1, 1), end = c(50, 50))
+)
+read_bigwig(bw, chrom = gr)
 #> # A tibble: 3 × 4
 #>   chrom start   end value
 #>   <chr> <int> <int> <dbl>

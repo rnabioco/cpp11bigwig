@@ -70,4 +70,35 @@ read_bigbed(bb, chrom = "chr10")
 #>   <chr>  <int>  <int> <chr> <int> <chr>       <int>    <int>    <int>      <int>
 #> 1 chr10 4.85e6 4.88e6 diff…     1 +         4848118  4880877        1          6
 #> # ℹ 2 more variables: blockSizes <chr>, chromStarts <chr>
+
+# query several chromosomes in one call
+read_bigbed(bb, chrom = c("chr1", "chr10"))
+#> # A tibble: 2 × 12
+#>   chrom  start    end name  score strand thickStart thickEnd reserved blockCount
+#>   <chr>  <int>  <int> <chr> <int> <chr>       <int>    <int>    <int>      <int>
+#> 1 chr1  4.80e6 4.84e6 test…     1 +         4797973  4836816        1          9
+#> 2 chr10 4.85e6 4.88e6 diff…     1 +         4848118  4880877        1          6
+#> # ℹ 2 more variables: blockSizes <chr>, chromStarts <chr>
+
+# restrict each query to a window
+read_bigbed(bb, chrom = c("chr1", "chr10"), start = c(0, 0), end = c(5e6, 5e6))
+#> # A tibble: 2 × 12
+#>   chrom  start    end name  score strand thickStart thickEnd reserved blockCount
+#>   <chr>  <int>  <int> <chr> <int> <chr>       <int>    <int>    <int>      <int>
+#> 1 chr1  4.80e6 4.84e6 test…     1 +         4797973  4836816        1          9
+#> 2 chr10 4.85e6 4.88e6 diff…     1 +         4848118  4880877        1          6
+#> # ℹ 2 more variables: blockSizes <chr>, chromStarts <chr>
+
+# pass a GRanges of regions; 1-based coords are converted automatically
+gr <- GenomicRanges::GRanges(
+  c("chr1", "chr10"),
+  IRanges::IRanges(start = 1, width = 1e7)
+)
+read_bigbed(bb, chrom = gr)
+#> # A tibble: 2 × 12
+#>   chrom  start    end name  score strand thickStart thickEnd reserved blockCount
+#>   <chr>  <int>  <int> <chr> <int> <chr>       <int>    <int>    <int>      <int>
+#> 1 chr1  4.80e6 4.84e6 test…     1 +         4797973  4836816        1          9
+#> 2 chr10 4.85e6 4.88e6 diff…     1 +         4848118  4880877        1          6
+#> # ℹ 2 more variables: blockSizes <chr>, chromStarts <chr>
 ```
