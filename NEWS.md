@@ -1,4 +1,4 @@
-# cpp11bigwig (development version)
+# cpp11bigwig 0.3.0
 
 * Multi-range queries now open the file once per call instead of re-opening it
   for every range. The per-range loop moved into C++, so a query of many ranges
