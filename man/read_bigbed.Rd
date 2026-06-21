@@ -11,11 +11,17 @@ read_bigbed(bbfile, chrom = NULL, start = NULL, end = NULL)
 (\verb{http://}, \verb{https://}, \verb{ftp://}) are supported when the package was
 installed with libcurl available.}
 
-\item{chrom}{read data for specific chromosome}
+\item{chrom}{chromosome(s) to read. Either a character vector of
+chromosome names, or a \link[GenomicRanges:GRanges]{GenomicRanges::GRanges} of query regions (in
+which case \code{start}/\code{end} are ignored). As with \code{\link[=read_bigwig]{read_bigwig()}},
+\code{GRanges} 1-based coordinates are converted to bigBed's 0-based
+half-open coordinates.}
 
-\item{start}{start position for data}
+\item{start}{start position(s) for data. May be a vector describing
+several ranges, recycled against \code{chrom}/\code{end}.}
 
-\item{end}{end position for data}
+\item{end}{end position(s) for data. May be a vector describing
+several ranges, recycled against \code{chrom}/\code{start}.}
 }
 \value{
 \code{tibble}

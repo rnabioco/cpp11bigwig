@@ -58,6 +58,107 @@ test_that("as = 'Rle' returns a per-base run-length vector", {
   expect_equal(names(rl), c("1", "10"))
 })
 
+test_that("read_bigwig accepts multiple ranges", {
+  bw <- test_path("data/test.bw")
+
+  # vectorized chrom/start/end: result is the rbind of the single queries
+  multi <- read_bigwig(bw, chrom = c("1", "10"), start = c(0, 0), end = c(50, 50))
+  s1 <- read_bigwig(bw, chrom = "1", start = 0, end = 50)
+  s2 <- read_bigwig(bw, chrom = "10", start = 0, end = 50)
+  expect_equal(nrow(multi), nrow(s1) + nrow(s2))
+  expect_equal(
+    as.data.frame(multi),
+    as.data.frame(rbind(s1, s2))
+  )
+
+  # two ranges on the same chromosome are both returned
+  same <- read_bigwig(bw, chrom = "1", start = c(0, 100), end = c(50, 150))
+  expect_equal(unique(same$chrom), "1")
+  expect_gt(nrow(same), nrow(s1))
+
+  # scalar chrom recycles against vector start/end
+  expect_equal(
+    nrow(read_bigwig(bw, chrom = "1", start = c(0, 100), end = c(50, 150))),
+    nrow(same)
+  )
+
+  # mismatched lengths are an error
+  expect_error(
+    read_bigwig(bw, chrom = c("1", "10"), start = c(0, 0, 0), end = 50),
+    "same length"
+  )
+
+  # negative coordinates still error in multi-range mode
+  expect_error(
+    read_bigwig(bw, chrom = c("1", "10"), start = c(-1, 0), end = c(5, 5)),
+    ">= 0"
+  )
+})
+
+test_that("read_bigwig accepts a GRanges of regions", {
+  skip_if_not_installed("GenomicRanges")
+  bw <- test_path("data/test.bw")
+
+  # GRanges is 1-based inclusive; bigWig is 0-based half-open. A GRanges
+  # region start(gr):end(gr) must match the vectorized (start(gr) - 1, end(gr)).
+  gr <- GenomicRanges::GRanges(
+    c("1", "10"),
+    IRanges::IRanges(start = c(1, 1), end = c(50, 50))
+  )
+  from_gr <- read_bigwig(bw, chrom = gr)
+  from_vec <- read_bigwig(bw, chrom = c("1", "10"), start = c(0, 0), end = c(50, 50))
+  expect_equal(as.data.frame(from_gr), as.data.frame(from_vec))
+
+  # GRanges combines with as = "GRanges" too
+  g <- read_bigwig(bw, chrom = gr, as = "GRanges")
+  expect_s4_class(g, "GRanges")
+})
+
+test_that("multi-range as = 'Rle' returns a per-range RleList", {
+  bw <- test_path("data/test.bw")
+
+  rl <- read_bigwig(
+    bw,
+    chrom = c("1", "10"),
+    start = c(0, 0),
+    end = c(50, 50),
+    as = "Rle"
+  )
+  expect_s4_class(rl, "RleList")
+  expect_equal(length(rl), 2L)
+  expect_equal(names(rl), c("1:0-50", "10:0-50"))
+  # each element spans its requested window
+  expect_equal(lengths(rl), c("1:0-50" = 50L, "10:0-50" = 50L))
+
+  # a single requested range still collapses to a bare Rle
+  r1 <- read_bigwig(bw, chrom = "1", start = 0, end = 50, as = "Rle")
+  expect_s4_class(r1, "Rle")
+})
+
+test_that("read_bigbed accepts multiple ranges", {
+  bb <- test_path("data/test.bb")
+
+  multi <- read_bigbed(
+    bb,
+    chrom = c("chr1", "chr10"),
+    start = c(0, 0),
+    end = c(1e7, 1e7)
+  )
+  s1 <- read_bigbed(bb, chrom = "chr1", start = 0, end = 1e7)
+  s2 <- read_bigbed(bb, chrom = "chr10", start = 0, end = 1e7)
+  expect_s3_class(multi, "tbl_df")
+  expect_equal(nrow(multi), nrow(s1) + nrow(s2))
+
+  # GRanges input works for bigBed as well
+  skip_if_not_installed("GenomicRanges")
+  gr <- GenomicRanges::GRanges(
+    c("chr1", "chr10"),
+    IRanges::IRanges(start = c(1, 1), end = c(1e7, 1e7))
+  )
+  from_gr <- read_bigbed(bb, chrom = gr)
+  expect_equal(nrow(from_gr), nrow(multi))
+})
+
 test_that("missing file causes error", {
   expect_snapshot_error(read_bigwig("missing.bw"))
 })

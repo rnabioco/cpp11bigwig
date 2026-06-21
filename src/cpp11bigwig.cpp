@@ -3,7 +3,6 @@
 
 using namespace cpp11;
 
-#include <regex>
 #include <sstream>
 #include <vector>
 
@@ -39,15 +38,27 @@ std::vector<std::pair<std::string, std::string>> parse_autosql(const std::string
   std::string line;
 
   // Match lines like: "   uint   chromStart;  ..." or "   string name;  ..."
-  std::regex field_regex(R"(^\s*(\S+)\s+(\S+);)");
-
+  // (formerly a std::regex `^\s*(\S+)\s+(\S+);` — parsed by hand here to avoid
+  // a libstdc++ std::regex global-buffer-overflow flagged by AddressSanitizer).
   while (std::getline(stream, line)) {
-    std::smatch match;
-    if (std::regex_search(line, match, field_regex)) {
-      std::string type = match[1].str();
-      std::string name = match[2].str();
-      fields.push_back({name, type});
-    }
+    std::istringstream ls(line);
+    std::string type, name_tok;
+
+    // need at least two whitespace-delimited tokens: the type and the name
+    if (!(ls >> type >> name_tok))
+      continue;
+
+    // the name token must end in a ';' (matches the trailing `;` in the regex);
+    // use the last ';' to mirror the greedy `\S+;`
+    size_t semi = name_tok.rfind(';');
+    if (semi == std::string::npos)
+      continue;
+
+    std::string name = name_tok.substr(0, semi);
+    if (name.empty())
+      continue;
+
+    fields.push_back({name, type});
   }
 
   return fields;

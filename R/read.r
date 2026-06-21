@@ -3,9 +3,13 @@
 #' @param bwfile path or URL for a bigWig file. Remote files
 #'  (`http://`, `https://`, `ftp://`) are supported when the package was
 #'  installed with libcurl available.
-#' @param chrom read data for specific chromosome
-#' @param start start position for data
-#' @param end end position for data
+#' @param chrom chromosome(s) to read. Either a character vector of
+#'  chromosome names, or a [GenomicRanges::GRanges] of query regions (in
+#'  which case `start`/`end` are ignored; see Details).
+#' @param start start position(s) for data. May be a vector, recycled
+#'  against `chrom`/`end` to describe several ranges.
+#' @param end end position(s) for data. May be a vector, recycled
+#'  against `chrom`/`start` to describe several ranges.
 #' @param as return data as a specific type. One of `"tbl"` (the default
 #'  tibble), `"GRanges"`, or `"Rle"`. `"Rle"` returns a per-base
 #'  run-length-encoded vector spanning the requested range (see Details).
@@ -14,14 +18,21 @@
 #'  uncovered bases as missing. Ignored for other `as` values.
 #'
 #' @details
+#' Multiple ranges can be queried in one call by passing equal-length
+#' (or length-1, recycled) `chrom`, `start`, and `end` vectors, where
+#' range `i` is `(chrom[i], start[i], end[i])`. Alternatively, pass a
+#' [GenomicRanges::GRanges] as `chrom`; its regions are used directly.
+#' Because `GRanges` is 1-based and inclusive while bigWig is 0-based and
+#' half-open, a region is converted as `start(gr) - 1` to `end(gr)`.
+#'
 #' When `as = "Rle"`, the result is an [S4Vectors::Rle] whose expanded
 #' length equals the queried range, i.e. `end - start` when both are
 #' supplied, otherwise the extent of the returned data for each
 #' chromosome. Bases with no data in the file are set to `fill`. bigWig
 #' coordinates are 0-based and half-open, so element `i` corresponds to
-#' genomic position `start + i - 1`. A single-chromosome query returns a
-#' bare `Rle`; a multi-chromosome query returns a named
-#' [IRanges::RleList].
+#' genomic position `start + i - 1`. A single-range query returns a bare
+#' `Rle`; a multi-range (or multi-chromosome) query returns a named
+#' [IRanges::RleList] with one element per range.
 #'
 #' @return A `tibble`, `GRanges`, or `Rle`/`RleList` depending on `as`.
 #'
@@ -44,6 +55,9 @@
 #'
 #' read_bigwig(bw, chrom = "1", start = 100, end = 130, as = "Rle")
 #'
+#' # several ranges at once
+#' read_bigwig(bw, chrom = c("1", "10"), start = c(0, 0), end = c(50, 50))
+#'
 #' @export
 read_bigwig <- function(
   bwfile,
@@ -55,12 +69,51 @@ read_bigwig <- function(
 ) {
   check_bigwig_file(bwfile)
 
-  if ((!is.null(start) && start < 0) || (!is.null(end) && end < 0)) {
-    stop("`start` and `end` must both be >= 0")
-  }
-
   if (!is.null(as) && !as %in% c("GRanges", "tbl", "Rle")) {
     stop("`as` must be one of 'GRanges', 'Rle', or 'tbl' (the default)")
+  }
+
+  ranges <- normalize_ranges(chrom, start, end)
+
+  # multiple ranges: query each, then combine
+  if (!is.null(ranges)) {
+    check_ranges_nonneg(ranges)
+    reslist <- query_ranges(read_bigwig_cpp, bwfile, ranges)
+
+    if (!is.null(as) && as == "Rle") {
+      rles <- lapply(seq_len(nrow(ranges)), function(i) {
+        x <- reslist[[i]]
+        lo <- if (!is.na(ranges$start[i])) {
+          ranges$start[i]
+        } else if (length(x$start)) min(x$start) else 0L
+        hi <- if (!is.na(ranges$end[i])) {
+          ranges$end[i]
+        } else if (length(x$end)) max(x$end) else lo
+        runs_to_rle(x$start, x$end, x$value, lo, hi, fill)
+      })
+      # a single requested range collapses to a bare Rle
+      if (length(rles) == 1L) {
+        return(rles[[1]])
+      }
+      names(rles) <- sprintf(
+        "%s:%s-%s",
+        ranges$chrom,
+        format(ranges$start, trim = TRUE),
+        format(ranges$end, trim = TRUE)
+      )
+      return(RleList(rles, compress = FALSE))
+    }
+
+    combined <- do.call(rbind, reslist)
+    if (!is.null(as) && as == "GRanges") {
+      return(as_granges(combined))
+    }
+    return(as_tibble(combined))
+  }
+
+  # single range / whole-file path
+  if ((!is.null(start) && start < 0) || (!is.null(end) && end < 0)) {
+    stop("`start` and `end` must both be >= 0")
   }
 
   res <- read_bigwig_cpp(bwfile, chrom, start, end)
@@ -72,6 +125,73 @@ read_bigwig <- function(
   } else {
     return(as_tibble(res))
   }
+}
+
+#' normalize range inputs into a data.frame of (chrom, start, end) rows,
+#' or NULL for the single-range / whole-file legacy path.
+#'
+#' `chrom` may be a GRanges (start/end taken from it, ignoring the
+#' `start`/`end` args) or a character vector recycled against `start`/`end`.
+#' Unspecified start/end become NA (passed to C++ as NULL per range).
+#' @noRd
+normalize_ranges <- function(chrom, start, end) {
+  if (inherits(chrom, "GRanges")) {
+    df <- as.data.frame(chrom)
+    return(data.frame(
+      chrom = as.character(df$seqnames),
+      start = df$start - 1L, # 1-based inclusive -> 0-based half-open
+      end = df$end,
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  n <- max(length(chrom), length(start), length(end))
+  if (n <= 1L) {
+    return(NULL)
+  }
+
+  recycle <- function(x) {
+    if (is.null(x)) {
+      return(rep(NA, n))
+    }
+    if (length(x) == 1L) {
+      return(rep(x, n))
+    }
+    if (length(x) != n) {
+      stop("`chrom`, `start`, and `end` must have the same length (or length 1)")
+    }
+    x
+  }
+
+  data.frame(
+    chrom = as.character(recycle(chrom)),
+    start = as.numeric(recycle(start)),
+    end = as.numeric(recycle(end)),
+    stringsAsFactors = FALSE
+  )
+}
+
+#' error if any range has a negative start or end
+#' @noRd
+check_ranges_nonneg <- function(ranges) {
+  bad_start <- !is.na(ranges$start) & ranges$start < 0
+  bad_end <- !is.na(ranges$end) & ranges$end < 0
+  if (any(bad_start) || any(bad_end)) {
+    stop("`start` and `end` must both be >= 0")
+  }
+}
+
+#' call a C++ reader once per range, mapping NA back to NULL
+#' @noRd
+query_ranges <- function(fun, file, ranges) {
+  lapply(seq_len(nrow(ranges)), function(i) {
+    fun(
+      file,
+      if (is.na(ranges$chrom[i])) NULL else ranges$chrom[i],
+      if (is.na(ranges$start[i])) NULL else as.integer(ranges$start[i]),
+      if (is.na(ranges$end[i])) NULL else as.integer(ranges$end[i])
+    )
+  })
 }
 
 #' is `x` a remote (http/https/ftp) URL?
@@ -174,9 +294,15 @@ as_rle <- function(x, start, end, fill) {
 #' @param bbfile path or URL for a bigBed file. Remote files
 #'  (`http://`, `https://`, `ftp://`) are supported when the package was
 #'  installed with libcurl available.
-#' @param chrom read data for specific chromosome
-#' @param start start position for data
-#' @param end end position for data
+#' @param chrom chromosome(s) to read. Either a character vector of
+#'  chromosome names, or a [GenomicRanges::GRanges] of query regions (in
+#'  which case `start`/`end` are ignored). As with [read_bigwig()],
+#'  `GRanges` 1-based coordinates are converted to bigBed's 0-based
+#'  half-open coordinates.
+#' @param start start position(s) for data. May be a vector describing
+#'  several ranges, recycled against `chrom`/`end`.
+#' @param end end position(s) for data. May be a vector describing
+#'  several ranges, recycled against `chrom`/`start`.
 #'
 #' @return \code{tibble}
 #'
@@ -198,6 +324,15 @@ read_bigbed <- function(
   end = NULL
 ) {
   check_bigwig_file(bbfile)
+
+  ranges <- normalize_ranges(chrom, start, end)
+
+  # multiple ranges: query each, then combine
+  if (!is.null(ranges)) {
+    check_ranges_nonneg(ranges)
+    reslist <- query_ranges(read_bigbed_cpp, bbfile, ranges)
+    return(as_tibble(do.call(rbind, reslist)))
+  }
 
   if ((!is.null(start) && start < 0) || (!is.null(end) && end < 0)) {
     stop("`start` and `end` must both be >= 0")

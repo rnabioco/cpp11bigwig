@@ -1,0 +1,37 @@
+[workspace]
+name = "cpp11bigwig"
+description = "Development environment for building, documenting, and testing cpp11bigwig"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+# Toolchain + R packages needed to build, document, and test the package.
+# This environment is for development only and is excluded from the R build
+# via .Rbuildignore (^\.pixi$, ^pixi\.toml$, ^pixi\.lock$).
+[dependencies]
+r-base = "4.*"
+r-devtools = "*"
+r-roxygen2 = "*"
+r-cpp11 = "*"
+r-testthat = "*"
+r-tibble = "*"
+# decor (below) and its dependencies; decor is not on conda, so it is
+# installed from CRAN by the `bootstrap` task using these as prereqs.
+r-xml2 = "*"
+r-vctrs = "*"
+bioconductor-genomicranges = "*"
+bioconductor-iranges = "*"
+bioconductor-s4vectors = "*"
+c-compiler = "*"
+cxx-compiler = "*"
+make = "*"
+pkg-config = "*"
+libcurl = "*"
+
+[tasks]
+# decor is required by cpp11::cpp_register() (run during devtools::document/
+# load_all) but is not available on conda; install it from CRAN once.
+bootstrap = "Rscript -e 'if (!requireNamespace(\"decor\", quietly=TRUE)) install.packages(\"decor\", repos=\"https://cloud.r-project.org\")'"
+document = { cmd = "Rscript -e 'devtools::document()'", depends-on = ["bootstrap"] }
+test = { cmd = "Rscript -e 'devtools::test()'", depends-on = ["bootstrap"] }
+check = { cmd = "Rscript -e 'devtools::check()'", depends-on = ["bootstrap"] }
+install = "R CMD INSTALL --no-multiarch ."

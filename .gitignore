@@ -7,3 +7,6 @@ revdep
 # Compiled object files
 src/libBigWig/*.o
 src/libBigWig/*.a
+
+# pixi environment
+.pixi/
