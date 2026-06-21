@@ -66,15 +66,19 @@ installed with libcurl available.</p></dd>
 
 
 <dt id="arg-chrom">chrom<a class="anchor" aria-label="anchor" href="#arg-chrom"></a></dt>
-<dd><p>read data for specific chromosome</p></dd>
+<dd><p>chromosome(s) to read. Either a character vector of
+chromosome names, or a <a href="https://rdrr.io/pkg/GenomicRanges/man/GRanges-class.html" class="external-link">GenomicRanges::GRanges</a> of query regions (in
+which case <code>start</code>/<code>end</code> are ignored; see Details).</p></dd>
 
 
 <dt id="arg-start">start<a class="anchor" aria-label="anchor" href="#arg-start"></a></dt>
-<dd><p>start position for data</p></dd>
+<dd><p>start position(s) for data. May be a vector, recycled
+against <code>chrom</code>/<code>end</code> to describe several ranges.</p></dd>
 
 
 <dt id="arg-end">end<a class="anchor" aria-label="anchor" href="#arg-end"></a></dt>
-<dd><p>end position for data</p></dd>
+<dd><p>end position(s) for data. May be a vector, recycled
+against <code>chrom</code>/<code>start</code> to describe several ranges.</p></dd>
 
 
 <dt id="arg-as">as<a class="anchor" aria-label="anchor" href="#arg-as"></a></dt>
@@ -95,14 +99,20 @@ uncovered bases as missing. Ignored for other <code>as</code> values.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>When <code>as = "Rle"</code>, the result is an <a href="https://rdrr.io/pkg/S4Vectors/man/Rle-class.html" class="external-link">S4Vectors::Rle</a> whose expanded
+    <p>Multiple ranges can be queried in one call by passing equal-length
+(or length-1, recycled) <code>chrom</code>, <code>start</code>, and <code>end</code> vectors, where
+range <code>i</code> is <code>(chrom[i], start[i], end[i])</code>. Alternatively, pass a
+<a href="https://rdrr.io/pkg/GenomicRanges/man/GRanges-class.html" class="external-link">GenomicRanges::GRanges</a> as <code>chrom</code>; its regions are used directly.
+Because <code>GRanges</code> is 1-based and inclusive while bigWig is 0-based and
+half-open, a region is converted as <code>start(gr) - 1</code> to <code>end(gr)</code>.</p>
+<p>When <code>as = "Rle"</code>, the result is an <a href="https://rdrr.io/pkg/S4Vectors/man/Rle-class.html" class="external-link">S4Vectors::Rle</a> whose expanded
 length equals the queried range, i.e. <code>end - start</code> when both are
 supplied, otherwise the extent of the returned data for each
 chromosome. Bases with no data in the file are set to <code>fill</code>. bigWig
 coordinates are 0-based and half-open, so element <code>i</code> corresponds to
-genomic position <code>start + i - 1</code>. A single-chromosome query returns a
-bare <code>Rle</code>; a multi-chromosome query returns a named
-<a href="https://rdrr.io/pkg/IRanges/man/AtomicList-class.html" class="external-link">IRanges::RleList</a>.</p>
+genomic position <code>start + i - 1</code>. A single-range query returns a bare
+<code>Rle</code>; a multi-range (or multi-chromosome) query returns a named
+<a href="https://rdrr.io/pkg/IRanges/man/AtomicList-class.html" class="external-link">IRanges::RleList</a> with one element per range.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -154,6 +164,15 @@ bare <code>Rle</code>; a multi-chromosome query returns a named
 <span class="r-out co"><span class="r-pr">#&gt;</span> numeric-Rle of length 30 with 1 run</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Lengths:  30</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Values : 1.4</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># several ranges at once</span></span></span>
+<span class="r-in"><span><span class="fu">read_bigwig</span><span class="op">(</span><span class="va">bw</span>, chrom <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"1"</span>, <span class="st">"10"</span><span class="op">)</span>, start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span>, end <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">50</span>, <span class="fl">50</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 4</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   chrom start   end value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 1         0     1 0.100</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 1         1     2 0.200</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 1         2     3 0.300</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

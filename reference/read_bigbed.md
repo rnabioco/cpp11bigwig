@@ -22,15 +22,23 @@ read_bigbed(bbfile, chrom = NULL, start = NULL, end = NULL)
 
 - chrom:
 
-  read data for specific chromosome
+  chromosome(s) to read. Either a character vector of chromosome names,
+  or a
+  [GenomicRanges::GRanges](https://rdrr.io/pkg/GenomicRanges/man/GRanges-class.html)
+  of query regions (in which case `start`/`end` are ignored). As with
+  [`read_bigwig()`](https://rnabioco.github.io/cpp11bigwig/reference/read_bigwig.md),
+  `GRanges` 1-based coordinates are converted to bigBed's 0-based
+  half-open coordinates.
 
 - start:
 
-  start position for data
+  start position(s) for data. May be a vector describing several ranges,
+  recycled against `chrom`/`end`.
 
 - end:
 
-  end position for data
+  end position(s) for data. May be a vector describing several ranges,
+  recycled against `chrom`/`start`.
 
 ## Value
 

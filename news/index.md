@@ -2,7 +2,23 @@
 
 ## cpp11bigwig (development version)
 
+- Fix a CRAN `gcc-ASAN` global-buffer-overflow reported when reading
+  bigBed files. The autoSql schema parser no longer uses `std::regex`
+  (which tripped an AddressSanitizer error inside libstdc++); it now
+  parses the schema with simple string operations.
+
+- [`read_bigwig()`](https://rnabioco.github.io/cpp11bigwig/reference/read_bigwig.md)
+  and
+  [`read_bigbed()`](https://rnabioco.github.io/cpp11bigwig/reference/read_bigbed.md)
+  can now query multiple ranges in a single call. Pass equal-length (or
+  length-1, recycled) `chrom`, `start`, and `end` vectors, or a
+  `GRanges` of regions via `chrom`. For `read_bigwig(as = "Rle")`, a
+  multi-range query returns a named `RleList` with one element per range
+  ([\#18](https://github.com/rnabioco/cpp11bigwig/issues/18)).
+
 ## cpp11bigwig 0.2.0
+
+CRAN release: 2026-06-18
 
 - [`read_bigwig()`](https://rnabioco.github.io/cpp11bigwig/reference/read_bigwig.md)
   gains `as = "Rle"`, returning a per-base run-length-encoded vector

@@ -71,15 +71,21 @@ installed with libcurl available.</p></dd>
 
 
 <dt id="arg-chrom">chrom<a class="anchor" aria-label="anchor" href="#arg-chrom"></a></dt>
-<dd><p>read data for specific chromosome</p></dd>
+<dd><p>chromosome(s) to read. Either a character vector of
+chromosome names, or a <a href="https://rdrr.io/pkg/GenomicRanges/man/GRanges-class.html" class="external-link">GenomicRanges::GRanges</a> of query regions (in
+which case <code>start</code>/<code>end</code> are ignored). As with <code><a href="read_bigwig.html">read_bigwig()</a></code>,
+<code>GRanges</code> 1-based coordinates are converted to bigBed's 0-based
+half-open coordinates.</p></dd>
 
 
 <dt id="arg-start">start<a class="anchor" aria-label="anchor" href="#arg-start"></a></dt>
-<dd><p>start position for data</p></dd>
+<dd><p>start position(s) for data. May be a vector describing
+several ranges, recycled against <code>chrom</code>/<code>end</code>.</p></dd>
 
 
 <dt id="arg-end">end<a class="anchor" aria-label="anchor" href="#arg-end"></a></dt>
-<dd><p>end position for data</p></dd>
+<dd><p>end position(s) for data. May be a vector describing
+several ranges, recycled against <code>chrom</code>/<code>start</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
