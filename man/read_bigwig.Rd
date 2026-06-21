@@ -18,11 +18,15 @@ read_bigwig(
 (\verb{http://}, \verb{https://}, \verb{ftp://}) are supported when the package was
 installed with libcurl available.}
 
-\item{chrom}{read data for specific chromosome}
+\item{chrom}{chromosome(s) to read. Either a character vector of
+chromosome names, or a \link[GenomicRanges:GRanges]{GenomicRanges::GRanges} of query regions (in
+which case \code{start}/\code{end} are ignored; see Details).}
 
-\item{start}{start position for data}
+\item{start}{start position(s) for data. May be a vector, recycled
+against \code{chrom}/\code{end} to describe several ranges.}
 
-\item{end}{end position for data}
+\item{end}{end position(s) for data. May be a vector, recycled
+against \code{chrom}/\code{start} to describe several ranges.}
 
 \item{as}{return data as a specific type. One of \code{"tbl"} (the default
 tibble), \code{"GRanges"}, or \code{"Rle"}. \code{"Rle"} returns a per-base
@@ -39,14 +43,21 @@ A \code{tibble}, \code{GRanges}, or \code{Rle}/\code{RleList} depending on \code
 Read data from bigWig files.
 }
 \details{
+Multiple ranges can be queried in one call by passing equal-length
+(or length-1, recycled) \code{chrom}, \code{start}, and \code{end} vectors, where
+range \code{i} is \verb{(chrom[i], start[i], end[i])}. Alternatively, pass a
+\link[GenomicRanges:GRanges]{GenomicRanges::GRanges} as \code{chrom}; its regions are used directly.
+Because \code{GRanges} is 1-based and inclusive while bigWig is 0-based and
+half-open, a region is converted as \code{start(gr) - 1} to \code{end(gr)}.
+
 When \code{as = "Rle"}, the result is an \link[S4Vectors:Rle]{S4Vectors::Rle} whose expanded
 length equals the queried range, i.e. \code{end - start} when both are
 supplied, otherwise the extent of the returned data for each
 chromosome. Bases with no data in the file are set to \code{fill}. bigWig
 coordinates are 0-based and half-open, so element \code{i} corresponds to
-genomic position \code{start + i - 1}. A single-chromosome query returns a
-bare \code{Rle}; a multi-chromosome query returns a named
-\link[IRanges:RleList]{IRanges::RleList}.
+genomic position \code{start + i - 1}. A single-range query returns a bare
+\code{Rle}; a multi-range (or multi-chromosome) query returns a named
+\link[IRanges:RleList]{IRanges::RleList} with one element per range.
 }
 \examples{
 bw <- system.file("extdata", "test.bw", package = "cpp11bigwig")
@@ -60,6 +71,9 @@ read_bigwig(bw, chrom = "1", start = 100, end = 130)
 read_bigwig(bw, as = "GRanges")
 
 read_bigwig(bw, chrom = "1", start = 100, end = 130, as = "Rle")
+
+# several ranges at once
+read_bigwig(bw, chrom = c("1", "10"), start = c(0, 0), end = c(50, 50))
 
 }
 \seealso{
