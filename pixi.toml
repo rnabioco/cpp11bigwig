@@ -26,6 +26,7 @@ cxx-compiler = "*"
 make = "*"
 pkg-config = "*"
 libcurl = "*"
+zlib = "*"
 
 [tasks]
 # decor is required by cpp11::cpp_register() (run during devtools::document/

@@ -40,6 +40,19 @@ read_bigbed(bb)
 
 read_bigbed(bb, chrom = "chr10")
 
+# query several chromosomes in one call
+read_bigbed(bb, chrom = c("chr1", "chr10"))
+
+# restrict each query to a window
+read_bigbed(bb, chrom = c("chr1", "chr10"), start = c(0, 0), end = c(5e6, 5e6))
+
+# pass a GRanges of regions; 1-based coords are converted automatically
+gr <- GenomicRanges::GRanges(
+  c("chr1", "chr10"),
+  IRanges::IRanges(start = 1, width = 1e7)
+)
+read_bigbed(bb, chrom = gr)
+
 }
 \seealso{
 \url{https://github.com/dpryan79/libBigWig}

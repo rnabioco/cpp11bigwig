@@ -55,8 +55,21 @@
 #'
 #' read_bigwig(bw, chrom = "1", start = 100, end = 130, as = "Rle")
 #'
-#' # several ranges at once
+#' # query several ranges in one call with equal-length vectors
 #' read_bigwig(bw, chrom = c("1", "10"), start = c(0, 0), end = c(50, 50))
+#'
+#' # multiple windows on the same chromosome (chrom recycles)
+#' read_bigwig(bw, chrom = "1", start = c(0, 100), end = c(50, 130))
+#'
+#' # a multi-range "Rle" query returns a named RleList, one element per range
+#' read_bigwig(bw, chrom = "1", start = c(0, 100), end = c(50, 130), as = "Rle")
+#'
+#' # pass a GRanges of regions; 1-based coords are converted automatically
+#' gr <- GenomicRanges::GRanges(
+#'   c("1", "10"),
+#'   IRanges::IRanges(start = c(1, 1), end = c(50, 50))
+#' )
+#' read_bigwig(bw, chrom = gr)
 #'
 #' @export
 read_bigwig <- function(
@@ -315,6 +328,19 @@ as_rle <- function(x, start, end, fill) {
 #' read_bigbed(bb)
 #'
 #' read_bigbed(bb, chrom = "chr10")
+#'
+#' # query several chromosomes in one call
+#' read_bigbed(bb, chrom = c("chr1", "chr10"))
+#'
+#' # restrict each query to a window
+#' read_bigbed(bb, chrom = c("chr1", "chr10"), start = c(0, 0), end = c(5e6, 5e6))
+#'
+#' # pass a GRanges of regions; 1-based coords are converted automatically
+#' gr <- GenomicRanges::GRanges(
+#'   c("chr1", "chr10"),
+#'   IRanges::IRanges(start = 1, width = 1e7)
+#' )
+#' read_bigbed(bb, chrom = gr)
 #'
 #' @export
 read_bigbed <- function(
