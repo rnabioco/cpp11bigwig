@@ -40,7 +40,10 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="cpp11bigwig-development-version">cpp11bigwig (development version)<a class="anchor" aria-label="anchor" href="#cpp11bigwig-development-version"></a></h2>
-<ul><li><p>Fix a CRAN <code>gcc-ASAN</code> global-buffer-overflow reported when reading bigBed files. The autoSql schema parser no longer uses <code>std::regex</code> (which tripped an AddressSanitizer error inside libstdc++); it now parses the schema with simple string operations.</p></li>
+<ul><li><p>Multi-range queries now open the file once per call instead of re-opening it for every range. The per-range loop moved into C++, so a query of many ranges (and especially a remote file, where each open re-fetches headers) is substantially faster.</p></li>
+<li><p><code><a href="../reference/read_bigbed.html">read_bigbed()</a></code> no longer crashes on a bigBed file with no embedded autoSql schema. <code>bbGetSQL()</code> returns <code>NULL</code> in that case, and constructing a <code>std::string</code> from it was undefined behavior; such files now read back their <code>chrom</code>/<code>start</code>/<code>end</code> columns with no extra typed fields.</p></li>
+<li><p>The bigWig/bigBed readers now release the libBigWig file handle and read buffer when they error out (e.g. on an unreadable file or a failed interval query), rather than leaking them.</p></li>
+<li><p>Fix a CRAN <code>gcc-ASAN</code> global-buffer-overflow reported when reading bigBed files. The autoSql schema parser no longer uses <code>std::regex</code> (which tripped an AddressSanitizer error inside libstdc++); it now parses the schema with simple string operations.</p></li>
 <li><p><code><a href="../reference/read_bigwig.html">read_bigwig()</a></code> and <code><a href="../reference/read_bigbed.html">read_bigbed()</a></code> can now query multiple ranges in a single call. Pass equal-length (or length-1, recycled) <code>chrom</code>, <code>start</code>, and <code>end</code> vectors, or a <code>GRanges</code> of regions via <code>chrom</code>. For <code>read_bigwig(as = "Rle")</code>, a multi-range query returns a named <code>RleList</code> with one element per range (<a href="https://github.com/rnabioco/cpp11bigwig/issues/18" class="external-link">#18</a>).</p></li>
 </ul></div>
     <div class="section level2">
