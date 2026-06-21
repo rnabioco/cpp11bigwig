@@ -75,8 +75,14 @@ std::vector<std::string> split_string(const std::string& str, char delim) {
   return tokens;
 }
 
+// Each query is one (chrom, start, end) range; the inputs are equal-length
+// vectors describing several ranges. An NA `chrom` selects every chromosome;
+// an NA `start`/`end` defaults to the chromosome's bounds. The file is opened
+// once and every range is served from that handle. Returns a list with one
+// data frame per range (the R layer combines or post-processes them).
 [[cpp11::register]]
-writable::data_frame read_bigwig_cpp(std::string bwfname, sexp chrom, sexp start, sexp end) {
+writable::list read_bigwig_cpp(std::string bwfname, strings chroms_r, integers starts_r,
+                               integers ends_r) {
   const char* bwfile = bwfname.c_str();
 
   bigWigFile_t* bwf = NULL;
@@ -88,72 +94,89 @@ writable::data_frame read_bigwig_cpp(std::string bwfname, sexp chrom, sexp start
   // NULL can be a CURL callback. see libBigWig demos
   bwf = bwOpen(bwfile, NULL, "r");
 
-  if (!bwf)
+  if (!bwf) {
+    bwCleanup();
     stop("Failed to open file: '%s'\n", bwfname.c_str());
+  }
 
-  std::vector<std::string> chroms;
-  std::vector<int> starts;
-  std::vector<int> ends;
-  std::vector<float> vals;
-
-  bwOverlappingIntervals_t* intervals = NULL;
+  R_xlen_t nranges = chroms_r.size();
+  writable::list out(nranges);
 
   int nchrom = bwf->cl->nKeys;
-  for (int nc = 0; nc < nchrom; ++nc) {
-    char* bw_chrom = bwf->cl->chrom[nc];
-    std::string bw_chrom_c(bw_chrom);
+  for (R_xlen_t r = 0; r < nranges; ++r) {
+    bool any_chrom = is_na(chroms_r[r]);
+    std::string want_chrom = any_chrom ? std::string() : static_cast<std::string>(chroms_r[r]);
+    bool start_na = starts_r[r] == NA_INTEGER;
+    bool end_na = ends_r[r] == NA_INTEGER;
 
-    if (!Rf_isNull(chrom)) {
-      std::string r_chrom = as_cpp<std::string>(chrom);
-      if (r_chrom != bw_chrom_c)
+    std::vector<std::string> chroms;
+    std::vector<int> starts;
+    std::vector<int> ends;
+    std::vector<float> vals;
+
+    for (int nc = 0; nc < nchrom; ++nc) {
+      char* bw_chrom = bwf->cl->chrom[nc];
+      std::string bw_chrom_c(bw_chrom);
+
+      if (!any_chrom && want_chrom != bw_chrom_c)
         continue;
-    }
 
-    // set maximum boundaries if start / end are not specified
-    int bw_start = Rf_isNull(start) ? 0 : as_cpp<int>(start);
-    int bw_end = Rf_isNull(end) ? bwf->cl->len[nc] : as_cpp<int>(end);
+      // set maximum boundaries if start / end are not specified
+      int bw_start = start_na ? 0 : starts_r[r];
+      int bw_end = end_na ? bwf->cl->len[nc] : ends_r[r];
 
-    intervals = bwGetValues(bwf, bw_chrom, bw_start, bw_end, 0);
+      bwOverlappingIntervals_t* intervals = bwGetValues(bwf, bw_chrom, bw_start, bw_end, 0);
 
-    if (!intervals)
-      stop("Failed to retreived intervals for chrom `%s`\n", bw_chrom);
+      if (!intervals) {
+        bwClose(bwf);
+        bwCleanup();
+        stop("Failed to retrieve intervals for chrom `%s`\n", bw_chrom);
+      }
 
-    int nint = intervals->l;
+      int nint = intervals->l;
 
-    for (int i = 0; i < nint; ++i) {
-      int start = intervals->start[i];
-      int end = start + 1;
-      float val = intervals->value[i];
+      for (int i = 0; i < nint; ++i) {
+        int start = intervals->start[i];
+        int end = start + 1;
+        float val = intervals->value[i];
 
-      if (i == 0) {
-        chroms.push_back(bw_chrom_c);
-        starts.push_back(start);
-        ends.push_back(end);
-        vals.push_back(val);
-      } else {
-        if (start == ends.back() && val == vals.back()) {
-          ends.back() = end;
-        } else {
+        if (i == 0) {
           chroms.push_back(bw_chrom_c);
           starts.push_back(start);
           ends.push_back(end);
           vals.push_back(val);
+        } else {
+          if (start == ends.back() && val == vals.back()) {
+            ends.back() = end;
+          } else {
+            chroms.push_back(bw_chrom_c);
+            starts.push_back(start);
+            ends.push_back(end);
+            vals.push_back(val);
+          }
         }
       }
+
+      bwDestroyOverlappingIntervals(intervals);
     }
 
-    bwDestroyOverlappingIntervals(intervals);
+    out[r] = writable::data_frame(
+        {"chrom"_nm = chroms, "start"_nm = starts, "end"_nm = ends, "value"_nm = vals});
   }
 
   bwClose(bwf);
   bwCleanup();
 
-  return writable::data_frame(
-      {"chrom"_nm = chroms, "start"_nm = starts, "end"_nm = ends, "value"_nm = vals});
+  return out;
 }
 
+// As with read_bigwig_cpp, the inputs are equal-length per-range vectors and
+// the file is opened once. The autoSql schema (and thus the column layout) is
+// parsed a single time up front and shared across ranges. Returns a list with
+// one data frame per range.
 [[cpp11::register]]
-writable::data_frame read_bigbed_cpp(std::string bbfname, sexp chrom, sexp start, sexp end) {
+writable::list read_bigbed_cpp(std::string bbfname, strings chroms_r, integers starts_r,
+                               integers ends_r) {
   const char* bbfile = bbfname.c_str();
   bigWigFile_t* bbf = NULL;
 
@@ -164,12 +187,16 @@ writable::data_frame read_bigbed_cpp(std::string bbfname, sexp chrom, sexp start
   // NULL can be a CURL callback. see libBigWig demos
   bbf = bbOpen(bbfile, NULL);
 
-  if (!bbf)
+  if (!bbf) {
+    bwCleanup();
     stop("Failed to open file: '%s'\n", bbfname.c_str());
+  }
 
-  // Get autoSql schema and parse field info
+  // Get autoSql schema and parse field info. bbGetSQL() returns NULL for
+  // bigBed files without an embedded schema (or on read error); guard against
+  // constructing a std::string from NULL.
   char* sql = bbGetSQL(bbf);
-  std::string sql_str(sql);
+  std::string sql_str(sql ? sql : "");
   free(sql);
 
   auto fields = parse_autosql(sql_str);
@@ -185,126 +212,137 @@ writable::data_frame read_bigbed_cpp(std::string bbfname, sexp chrom, sexp start
     field_rtypes.push_back(autosql_to_rtype(fields[i].second));
   }
 
-  // Storage for coordinate columns
-  std::vector<std::string> chroms;
-  std::vector<int> starts;
-  std::vector<int> ends;
-
-  // Storage for typed extra columns
-  std::vector<std::vector<int>> int_cols(num_extra_fields);
-  std::vector<std::vector<double>> dbl_cols(num_extra_fields);
-  std::vector<std::vector<std::string>> str_cols(num_extra_fields);
-
-  bbOverlappingEntries_t* intervals;
+  R_xlen_t nranges = chroms_r.size();
+  writable::list out(nranges);
 
   int nchrom = bbf->cl->nKeys;
-  for (int nc = 0; nc < nchrom; ++nc) {
-    char* bb_chrom = bbf->cl->chrom[nc];
-    std::string bb_chrom_c(bb_chrom);
+  for (R_xlen_t r = 0; r < nranges; ++r) {
+    bool any_chrom = is_na(chroms_r[r]);
+    std::string want_chrom = any_chrom ? std::string() : static_cast<std::string>(chroms_r[r]);
+    bool start_na = starts_r[r] == NA_INTEGER;
+    bool end_na = ends_r[r] == NA_INTEGER;
 
-    if (!Rf_isNull(chrom)) {
-      std::string r_chrom = as_cpp<std::string>(chrom);
-      if (r_chrom != bb_chrom_c)
+    // Storage for coordinate columns
+    std::vector<std::string> chroms;
+    std::vector<int> starts;
+    std::vector<int> ends;
+
+    // Storage for typed extra columns
+    std::vector<std::vector<int>> int_cols(num_extra_fields);
+    std::vector<std::vector<double>> dbl_cols(num_extra_fields);
+    std::vector<std::vector<std::string>> str_cols(num_extra_fields);
+
+    for (int nc = 0; nc < nchrom; ++nc) {
+      char* bb_chrom = bbf->cl->chrom[nc];
+      std::string bb_chrom_c(bb_chrom);
+
+      if (!any_chrom && want_chrom != bb_chrom_c)
         continue;
-    }
 
-    // set maximum boundaries if start / end are not specified
-    int bb_start = Rf_isNull(start) ? 0 : as_cpp<int>(start);
-    int bb_end = Rf_isNull(end) ? bbf->cl->len[nc] : as_cpp<int>(end);
+      // set maximum boundaries if start / end are not specified
+      int bb_start = start_na ? 0 : starts_r[r];
+      int bb_end = end_na ? bbf->cl->len[nc] : ends_r[r];
 
-    intervals = bbGetOverlappingEntries(bbf, bb_chrom, bb_start, bb_end, 1);
+      bbOverlappingEntries_t* intervals =
+          bbGetOverlappingEntries(bbf, bb_chrom, bb_start, bb_end, 1);
 
-    if (!intervals)
-      stop("Failed to retrieve intervals for chrom `%s`\n", bb_chrom);
+      if (!intervals) {
+        bwClose(bbf);
+        bwCleanup();
+        stop("Failed to retrieve intervals for chrom `%s`\n", bb_chrom);
+      }
 
-    int nint = intervals->l;
+      int nint = intervals->l;
 
-    for (int i = 0; i < nint; ++i) {
-      int ivl_start = intervals->start[i];
-      int ivl_end = intervals->end[i];
-      std::string val_str = intervals->str[i];
+      for (int i = 0; i < nint; ++i) {
+        int ivl_start = intervals->start[i];
+        int ivl_end = intervals->end[i];
+        std::string val_str = intervals->str[i];
 
-      chroms.push_back(bb_chrom_c);
-      starts.push_back(ivl_start);
-      ends.push_back(ivl_end);
+        chroms.push_back(bb_chrom_c);
+        starts.push_back(ivl_start);
+        ends.push_back(ivl_end);
 
-      // Parse tab-separated extra fields
-      std::vector<std::string> tokens = split_string(val_str, '\t');
+        // Parse tab-separated extra fields
+        std::vector<std::string> tokens = split_string(val_str, '\t');
 
-      for (size_t j = 0; j < num_extra_fields; ++j) {
-        std::string token = (j < tokens.size()) ? tokens[j] : "";
+        for (size_t j = 0; j < num_extra_fields; ++j) {
+          std::string token = (j < tokens.size()) ? tokens[j] : "";
 
-        switch (field_rtypes[j]) {
-          case RType::Integer:
-            if (token.empty()) {
-              int_cols[j].push_back(NA_INTEGER);
-            } else {
-              try {
-                int_cols[j].push_back(std::stoi(token));
-              } catch (...) {
+          switch (field_rtypes[j]) {
+            case RType::Integer:
+              if (token.empty()) {
                 int_cols[j].push_back(NA_INTEGER);
+              } else {
+                try {
+                  int_cols[j].push_back(std::stoi(token));
+                } catch (...) {
+                  int_cols[j].push_back(NA_INTEGER);
+                }
               }
-            }
-            break;
-          case RType::Double:
-            if (token.empty()) {
-              dbl_cols[j].push_back(NA_REAL);
-            } else {
-              try {
-                dbl_cols[j].push_back(std::stod(token));
-              } catch (...) {
+              break;
+            case RType::Double:
+              if (token.empty()) {
                 dbl_cols[j].push_back(NA_REAL);
+              } else {
+                try {
+                  dbl_cols[j].push_back(std::stod(token));
+                } catch (...) {
+                  dbl_cols[j].push_back(NA_REAL);
+                }
               }
-            }
-            break;
-          case RType::String:
-            str_cols[j].push_back(token);
-            break;
+              break;
+            case RType::String:
+              str_cols[j].push_back(token);
+              break;
+          }
         }
       }
+
+      bbDestroyOverlappingEntries(intervals);
     }
 
-    bbDestroyOverlappingEntries(intervals);
+    // Build the data frame with named columns
+    writable::list result;
+    writable::strings col_names;
+
+    // Add coordinate columns
+    result.push_back(writable::strings(chroms.begin(), chroms.end()));
+    col_names.push_back("chrom");
+
+    result.push_back(writable::integers(starts.begin(), starts.end()));
+    col_names.push_back("start");
+
+    result.push_back(writable::integers(ends.begin(), ends.end()));
+    col_names.push_back("end");
+
+    // Add typed extra columns
+    for (size_t j = 0; j < num_extra_fields; ++j) {
+      switch (field_rtypes[j]) {
+        case RType::Integer:
+          result.push_back(writable::integers(int_cols[j].begin(), int_cols[j].end()));
+          break;
+        case RType::Double:
+          result.push_back(writable::doubles(dbl_cols[j].begin(), dbl_cols[j].end()));
+          break;
+        case RType::String:
+          result.push_back(writable::strings(str_cols[j].begin(), str_cols[j].end()));
+          break;
+      }
+      col_names.push_back(field_names[j]);
+    }
+
+    result.attr("names") = col_names;
+    result.attr("class") = writable::strings({"data.frame"});
+    result.attr("row.names") = writable::integers({NA_INTEGER, -static_cast<int>(chroms.size())});
+
+    out[r] = as_cpp<writable::data_frame>(result);
   }
 
   bwClose(bbf);
   bwCleanup();
 
-  // Build the data frame with named columns
-  writable::list result;
-  writable::strings col_names;
-
-  // Add coordinate columns
-  result.push_back(writable::strings(chroms.begin(), chroms.end()));
-  col_names.push_back("chrom");
-
-  result.push_back(writable::integers(starts.begin(), starts.end()));
-  col_names.push_back("start");
-
-  result.push_back(writable::integers(ends.begin(), ends.end()));
-  col_names.push_back("end");
-
-  // Add typed extra columns
-  for (size_t j = 0; j < num_extra_fields; ++j) {
-    switch (field_rtypes[j]) {
-      case RType::Integer:
-        result.push_back(writable::integers(int_cols[j].begin(), int_cols[j].end()));
-        break;
-      case RType::Double:
-        result.push_back(writable::doubles(dbl_cols[j].begin(), dbl_cols[j].end()));
-        break;
-      case RType::String:
-        result.push_back(writable::strings(str_cols[j].begin(), str_cols[j].end()));
-        break;
-    }
-    col_names.push_back(field_names[j]);
-  }
-
-  result.attr("names") = col_names;
-  result.attr("class") = writable::strings({"data.frame"});
-  result.attr("row.names") = writable::integers({NA_INTEGER, -static_cast<int>(chroms.size())});
-
-  return as_cpp<writable::data_frame>(result);
+  return out;
 }
 
 [[cpp11::register]]
@@ -318,14 +356,17 @@ std::string bigbed_sql_cpp(std::string bbfname) {
     stop("Failed to initialize libBigWig\n");
 
   // NULL can be a CURL callback. see libBigWig demos
-  bbf = bwOpen(bbfile, NULL, "r");
+  bbf = bbOpen(bbfile, NULL);
 
-  if (!bbf)
+  if (!bbf) {
+    bwCleanup();
     stop("Failed to open file: '%s'\n", bbfname.c_str());
+  }
 
   char* sql = bbGetSQL(bbf);
 
-  std::string sql_str(sql);
+  // NULL when the bigBed has no embedded autoSql schema (or on read error)
+  std::string sql_str(sql ? sql : "");
   free(sql);
 
   bwClose(bbf);

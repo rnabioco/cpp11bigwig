@@ -12,6 +12,7 @@
 ^[\.]?air\.toml$
 ^\.vscode$
 ^\.clang-format$
+^\.clang-format-ignore$
 ^\.claude$
 ^CLAUDE\.md$
 ^\.pixi$
