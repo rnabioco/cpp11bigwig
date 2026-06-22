@@ -1,3 +1,5 @@
+# cpp11bigwig (development version)
+
 # cpp11bigwig 0.3.0
 
 * Fix a CRAN `gcc-san` (UBSan) `load of misaligned address` runtime error when
