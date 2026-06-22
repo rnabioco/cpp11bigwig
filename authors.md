@@ -15,12 +15,12 @@ Source:
 [`DESCRIPTION`](https://github.com/rnabioco/cpp11bigwig/blob/main/DESCRIPTION)
 
 Hesselberth J (2026). *cpp11bigwig: Read bigWig and bigBed Files*. R
-package version 0.2.0.9000, <https://rnabioco.github.io/cpp11bigwig/>.
+package version 0.3.0, <https://rnabioco.github.io/cpp11bigwig/>.
 
     @Manual{,
       title = {cpp11bigwig: Read bigWig and bigBed Files},
       author = {Jay Hesselberth},
       year = {2026},
-      note = {R package version 0.2.0.9000},
+      note = {R package version 0.3.0},
       url = {https://rnabioco.github.io/cpp11bigwig/},
     }

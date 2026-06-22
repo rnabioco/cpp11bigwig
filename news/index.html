@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">cpp11bigwig</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,8 +39,9 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="cpp11bigwig-development-version">cpp11bigwig (development version)<a class="anchor" aria-label="anchor" href="#cpp11bigwig-development-version"></a></h2>
-<ul><li><p>Multi-range queries now open the file once per call instead of re-opening it for every range. The per-range loop moved into C++, so a query of many ranges (and especially a remote file, where each open re-fetches headers) is substantially faster.</p></li>
+<h2 class="pkg-version" data-toc-text="0.3.0" id="cpp11bigwig-030">cpp11bigwig 0.3.0<a class="anchor" aria-label="anchor" href="#cpp11bigwig-030"></a></h2><p class="text-muted">CRAN release: 2026-06-22</p>
+<ul><li><p>Fix a CRAN <code>gcc-san</code> (UBSan) <code>load of misaligned address</code> runtime error when reading a bigBed block that packs more than one record. In libBigWig’s <code>bwValues.c</code>, records are stored as three <code>uint32_t</code> fields followed by a variable-length name, so every record after the first starts on an unaligned offset; the fields are now read with <code>memcpy</code> instead of an aligned <code>uint32_t</code> cast.</p></li>
+<li><p>Multi-range queries now open the file once per call instead of re-opening it for every range. The per-range loop moved into C++, so a query of many ranges (and especially a remote file, where each open re-fetches headers) is substantially faster.</p></li>
 <li><p><code><a href="../reference/read_bigbed.html">read_bigbed()</a></code> no longer crashes on a bigBed file with no embedded autoSql schema. <code>bbGetSQL()</code> returns <code>NULL</code> in that case, and constructing a <code>std::string</code> from it was undefined behavior; such files now read back their <code>chrom</code>/<code>start</code>/<code>end</code> columns with no extra typed fields.</p></li>
 <li><p>The bigWig/bigBed readers now release the libBigWig file handle and read buffer when they error out (e.g. on an unreadable file or a failed interval query), rather than leaking them.</p></li>
 <li><p>Fix a CRAN <code>gcc-ASAN</code> global-buffer-overflow reported when reading bigBed files. The autoSql schema parser no longer uses <code>std::regex</code> (which tripped an AddressSanitizer error inside libstdc++); it now parses the schema with simple string operations.</p></li>
