@@ -1,5 +1,12 @@
 # cpp11bigwig 0.3.0
 
+* Fix a CRAN `gcc-san` (UBSan) `load of misaligned address` runtime error when
+  reading a bigBed block that packs more than one record. In libBigWig's
+  `bwValues.c`, records are stored as three `uint32_t` fields followed by a
+  variable-length name, so every record after the first starts on an
+  unaligned offset; the fields are now read with `memcpy` instead of an
+  aligned `uint32_t` cast.
+
 * Multi-range queries now open the file once per call instead of re-opening it
   for every range. The per-range loop moved into C++, so a query of many ranges
   (and especially a remote file, where each open re-fetches headers) is
