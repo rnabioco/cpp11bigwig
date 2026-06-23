@@ -298,6 +298,34 @@ test_that("read_bigbed handles a bigBed with no embedded autoSql schema", {
   expect_true(all(chr1$chrom == "chr1"))
 })
 
+test_that("read_bigbed recovers BED columns for a schema-less bed12", {
+  # A bed12 file written by `bedToBigBed` without `-as` has no autoSql schema
+  # but still stores 12 fields per record. The reader should fall back to the
+  # header's fieldCount/definedFieldCount and name the columns with the standard
+  # BED field names instead of dropping everything past chrom/start/end.
+  # test_noschema_bed12.bb is test.bb with its header sqlOffset zeroed.
+  noschema <- test_path("data/test_noschema_bed12.bb")
+  schema <- test_path("data/test.bb")
+
+  res <- read_bigbed(noschema)
+  expect_s3_class(res, "tbl_df")
+  expect_equal(ncol(res), 12)
+  expect_equal(
+    names(res),
+    c(
+      "chrom", "start", "end", "name", "score", "strand",
+      "thickStart", "thickEnd", "itemRgb", "blockCount",
+      "blockSizes", "blockStarts"
+    )
+  )
+
+  # schema-less output should match the schema-backed file column-for-column,
+  # apart from the (schema-derived) column names
+  ref <- read_bigbed(schema)
+  expect_equal(nrow(res), nrow(ref))
+  expect_equal(unname(as.list(res)), unname(as.list(ref)))
+})
+
 test_that("read_bigbed coerces columns based on autoSql types", {
   bb_file <- test_path("data/test.bb")
   bb_data <- read_bigbed(bb_file)

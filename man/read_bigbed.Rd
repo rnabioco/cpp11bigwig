@@ -33,6 +33,15 @@ floating point types (\code{float}, \code{double}) become R doubles, and all
 other types (including array types like \code{int[blockCount]}) remain
 as character strings.
 }
+\details{
+When a bigBed file has no embedded autoSql schema (for example one
+produced by \code{bedToBigBed} without \code{-as}), columns are still recovered
+using the standard BED field names (\code{name}, \code{score}, \code{strand},
+\code{thickStart}, \code{thickEnd}, \code{itemRgb}, \code{blockCount}, \code{blockSizes},
+\code{blockStarts}) derived from the file's field counts. Any additional
+(bedN+) fields beyond the standard BED columns are returned as
+generic \code{fieldN} character columns.
+}
 \examples{
 bb <- system.file("extdata", "test.bb", package = "cpp11bigwig")
 
