@@ -1,5 +1,12 @@
 # cpp11bigwig (development version)
 
+* `read_bigbed()` now returns all BED columns for files with no embedded autoSql
+  schema (e.g. a bed12 written by `bedToBigBed` without `-as`). Previously such
+  files returned only `chrom`/`start`/`end`; the reader now falls back to the
+  field counts in the file header and names columns with the standard BED field
+  names (any extra bedN+ fields become generic `fieldN` character columns)
+  (#18).
+
 # cpp11bigwig 0.3.0
 
 * Fix a CRAN `gcc-san` (UBSan) `load of misaligned address` runtime error when

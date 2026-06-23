@@ -320,6 +320,14 @@ as_rle <- function(x, start, end, fill) {
 #' other types (including array types like `int[blockCount]`) remain
 #' as character strings.
 #'
+#' When a bigBed file has no embedded autoSql schema (for example one
+#' produced by `bedToBigBed` without `-as`), columns are still recovered
+#' using the standard BED field names (`name`, `score`, `strand`,
+#' `thickStart`, `thickEnd`, `itemRgb`, `blockCount`, `blockSizes`,
+#' `blockStarts`) derived from the file's field counts. Any additional
+#' (bedN+) fields beyond the standard BED columns are returned as
+#' generic `fieldN` character columns.
+#'
 #' @param bbfile path or URL for a bigBed file. Remote files
 #'  (`http://`, `https://`, `ftp://`) are supported when the package was
 #'  installed with libcurl available.

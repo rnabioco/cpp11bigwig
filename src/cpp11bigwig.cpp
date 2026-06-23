@@ -64,6 +64,41 @@ std::vector<std::pair<std::string, std::string>> parse_autosql(const std::string
   return fields;
 }
 
+// Canonical UCSC BED fields (chrom, chromStart, chromEnd, then the bed4..bed12
+// columns), used as a fallback when a bigBed has no embedded autoSql schema.
+// Mirrors the standard bed12 autoSql so a schema-less file reads the same as one
+// encoded with `-as=bed12.as`. Sized to the file header's field counts:
+// `field_count` is the total number of columns and `defined_field_count` is how
+// many of the fixed-format BED fields are present (3-12); any field beyond that
+// is a bedN+ extra column of unknown type and falls back to a generic string.
+std::vector<std::pair<std::string, std::string>> default_bed_fields(uint16_t field_count,
+                                                                    uint16_t defined_field_count) {
+  static const std::pair<const char*, const char*> bed_fields[] = {
+      {"chrom", "string"},
+      {"start", "uint"},
+      {"end", "uint"},
+      {"name", "string"},
+      {"score", "uint"},
+      {"strand", "char[1]"},
+      {"thickStart", "uint"},
+      {"thickEnd", "uint"},
+      {"itemRgb", "uint"},
+      {"blockCount", "int"},
+      {"blockSizes", "int[blockCount]"},
+      {"blockStarts", "int[blockCount]"}};
+
+  std::vector<std::pair<std::string, std::string>> fields;
+  for (uint16_t i = 0; i < field_count; ++i) {
+    if (i < defined_field_count && i < 12) {
+      fields.push_back({bed_fields[i].first, bed_fields[i].second});
+    } else {
+      // bedN+ extra field with unknown type: keep as string, generic name
+      fields.push_back({"field" + std::to_string(i + 1), "string"});
+    }
+  }
+  return fields;
+}
+
 // Split a string by delimiter
 std::vector<std::string> split_string(const std::string& str, char delim) {
   std::vector<std::string> tokens;
@@ -200,6 +235,15 @@ writable::list read_bigbed_cpp(std::string bbfname, strings chroms_r, integers s
   free(sql);
 
   auto fields = parse_autosql(sql_str);
+
+  // Without an embedded schema (or on a partial parse) the field list comes up
+  // short of the layout recorded in the file header. Fall back to the canonical
+  // BED column names/types sized to the header counts so a schema-less bed12
+  // still yields all 12 columns instead of just chrom/start/end. A complete
+  // schema parses to exactly `fieldCount` entries and is never overridden.
+  if (fields.size() < bbf->hdr->fieldCount) {
+    fields = default_bed_fields(bbf->hdr->fieldCount, bbf->hdr->definedFieldCount);
+  }
 
   // Skip first 3 fields (chrom, chromStart, chromEnd) - handled separately
   size_t num_extra_fields = fields.size() > 3 ? fields.size() - 3 : 0;
