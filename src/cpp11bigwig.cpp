@@ -74,10 +74,17 @@ std::vector<std::pair<std::string, std::string>> parse_autosql(const std::string
 std::vector<std::pair<std::string, std::string>> default_bed_fields(uint16_t field_count,
                                                                     uint16_t defined_field_count) {
   static const std::pair<const char*, const char*> bed_fields[] = {
-      {"chrom", "string"},   {"start", "uint"},       {"end", "uint"},
-      {"name", "string"},    {"score", "uint"},       {"strand", "char[1]"},
-      {"thickStart", "uint"}, {"thickEnd", "uint"},   {"itemRgb", "uint"},
-      {"blockCount", "int"}, {"blockSizes", "int[blockCount]"},
+      {"chrom", "string"},
+      {"start", "uint"},
+      {"end", "uint"},
+      {"name", "string"},
+      {"score", "uint"},
+      {"strand", "char[1]"},
+      {"thickStart", "uint"},
+      {"thickEnd", "uint"},
+      {"itemRgb", "uint"},
+      {"blockCount", "int"},
+      {"blockSizes", "int[blockCount]"},
       {"blockStarts", "int[blockCount]"}};
 
   std::vector<std::pair<std::string, std::string>> fields;
