@@ -93,6 +93,16 @@ several ranges, recycled against <code>chrom</code>/<code>start</code>.</p></dd>
     <p><code>tibble</code></p>
     </div>
     <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>When a bigBed file has no embedded autoSql schema (for example one
+produced by <code>bedToBigBed</code> without <code>-as</code>), columns are still recovered
+using the standard BED field names (<code>name</code>, <code>score</code>, <code>strand</code>,
+<code>thickStart</code>, <code>thickEnd</code>, <code>itemRgb</code>, <code>blockCount</code>, <code>blockSizes</code>,
+<code>blockStarts</code>) derived from the file's field counts. Any additional
+(bedN+) fields beyond the standard BED columns are returned as
+generic <code>fieldN</code> character columns.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><a href="https://github.com/dpryan79/libBigWig" class="external-link">https://github.com/dpryan79/libBigWig</a></p>
 <p><a href="https://github.com/brentp/bw-python" class="external-link">https://github.com/brentp/bw-python</a></p></div>

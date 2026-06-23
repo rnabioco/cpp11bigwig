@@ -44,6 +44,16 @@ read_bigbed(bbfile, chrom = NULL, start = NULL, end = NULL)
 
 `tibble`
 
+## Details
+
+When a bigBed file has no embedded autoSql schema (for example one
+produced by `bedToBigBed` without `-as`), columns are still recovered
+using the standard BED field names (`name`, `score`, `strand`,
+`thickStart`, `thickEnd`, `itemRgb`, `blockCount`, `blockSizes`,
+`blockStarts`) derived from the file's field counts. Any additional
+(bedN+) fields beyond the standard BED columns are returned as generic
+`fieldN` character columns.
+
 ## See also
 
 <https://github.com/dpryan79/libBigWig>

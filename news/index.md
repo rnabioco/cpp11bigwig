@@ -2,6 +2,15 @@
 
 ## cpp11bigwig (development version)
 
+- [`read_bigbed()`](https://rnabioco.github.io/cpp11bigwig/reference/read_bigbed.md)
+  now returns all BED columns for files with no embedded autoSql schema
+  (e.g. a bed12 written by `bedToBigBed` without `-as`). Previously such
+  files returned only `chrom`/`start`/`end`; the reader now falls back
+  to the field counts in the file header and names columns with the
+  standard BED field names (any extra bedN+ fields become generic
+  `fieldN` character columns)
+  ([\#18](https://github.com/rnabioco/cpp11bigwig/issues/18)).
+
 ## cpp11bigwig 0.3.0
 
 CRAN release: 2026-06-22
