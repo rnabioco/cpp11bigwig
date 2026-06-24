@@ -2,6 +2,19 @@
 
 ## cpp11bigwig (development version)
 
+- New
+  [`bigbed_info()`](https://rnabioco.github.io/cpp11bigwig/reference/bigbed_info.md)
+  and
+  [`bigwig_info()`](https://rnabioco.github.io/cpp11bigwig/reference/bigwig_info.md)
+  report header metadata without reading any intervals.
+  [`bigbed_info()`](https://rnabioco.github.io/cpp11bigwig/reference/bigbed_info.md)
+  returns the field counts and embedded autoSql schema, making it
+  possible to identify the BED variant a file holds before reading it (a
+  genuine BED12 has `defined_field_count == 12`).
+  [`bigwig_info()`](https://rnabioco.github.io/cpp11bigwig/reference/bigwig_info.md)
+  returns the version, zoom levels, chromosome count, and file-level
+  summary statistics (`min`/`max`/`mean`/`std`).
+
 - [`read_bigbed()`](https://rnabioco.github.io/cpp11bigwig/reference/read_bigbed.md)
   now returns all BED columns for files with no embedded autoSql schema
   (e.g. a bed12 written by `bedToBigBed` without `-as`). Previously such
