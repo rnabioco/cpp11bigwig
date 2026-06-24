@@ -12,6 +12,14 @@ bigbed_sql_cpp <- function(bbfname) {
   .Call(`_cpp11bigwig_bigbed_sql_cpp`, bbfname)
 }
 
+bigbed_info_cpp <- function(bbfname) {
+  .Call(`_cpp11bigwig_bigbed_info_cpp`, bbfname)
+}
+
+bigwig_info_cpp <- function(bwfname) {
+  .Call(`_cpp11bigwig_bigwig_info_cpp`, bwfname)
+}
+
 bigwig_has_curl_cpp <- function() {
   .Call(`_cpp11bigwig_bigwig_has_curl_cpp`)
 }

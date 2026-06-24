@@ -358,3 +358,58 @@ test_that("read_bigbed coerces columns based on autoSql types", {
   expect_true(all(bb_data$thickStart >= bb_data$start))
   expect_true(all(bb_data$thickEnd <= bb_data$end))
 })
+
+test_that("bigbed_info reports header metadata and autoSql", {
+  info <- bigbed_info(test_path("data/test.bb"))
+
+  expect_named(
+    info,
+    c(
+      "version", "n_chroms", "field_count", "defined_field_count",
+      "n_bases_covered", "autosql"
+    )
+  )
+  # test.bb is a genuine BED12 with an embedded schema
+  expect_equal(info$field_count, 12L)
+  expect_equal(info$defined_field_count, 12L)
+  expect_gt(info$n_chroms, 0L)
+  expect_match(info$autosql, "blockSizes")
+})
+
+test_that("bigbed_info reads field counts from a schema-less bed12 header", {
+  # no embedded autoSql (sqlOffset zeroed) but the header still records 12 fields
+  info <- bigbed_info(test_path("data/test_noschema_bed12.bb"))
+
+  expect_equal(info$field_count, 12L)
+  expect_equal(info$defined_field_count, 12L)
+  expect_identical(info$autosql, "")
+})
+
+test_that("bigbed_info distinguishes a bed3 from a bed12", {
+  bed3 <- bigbed_info(test_path("data/test_noschema.bb"))
+  expect_equal(bed3$defined_field_count, 3L)
+})
+
+test_that("bigwig_info reports header metadata and summary stats", {
+  info <- bigwig_info(test_path("data/test.bw"))
+
+  expect_named(
+    info,
+    c(
+      "version", "n_levels", "n_chroms", "n_bases_covered",
+      "min", "max", "mean", "std"
+    )
+  )
+  expect_gt(info$n_chroms, 0L)
+  expect_gt(info$n_bases_covered, 0)
+  expect_true(info$max >= info$min)
+})
+
+test_that("info functions reject the wrong file type and missing files", {
+  bb <- test_path("data/test.bb")
+  bw <- test_path("data/test.bw")
+
+  expect_error(bigbed_info(bw), "Not a bigBed")
+  expect_error(bigwig_info(bb), "Not a bigWig")
+  expect_error(bigbed_info("does-not-exist.bb"), "does not exist")
+})
