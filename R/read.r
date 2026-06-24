@@ -385,3 +385,59 @@ read_bigbed <- function(
   reslist <- read_ranges(read_bigbed_cpp, bbfile, ranges)
   as_tibble(do.call(rbind, reslist))
 }
+
+#' Report header metadata for a bigBed file.
+#'
+#' Reads the bigBed header without loading any intervals. This is useful for
+#' identifying the BED variant a file holds before reading it: a genuine BED12
+#' has `defined_field_count == 12`, whereas a `bed9+3` file (9 standard BED
+#' columns plus 3 custom fields) has `defined_field_count == 9` and
+#' `field_count == 12`.
+#'
+#' @param bbfile path or URL for a bigBed file. Remote files
+#'  (`http://`, `https://`, `ftp://`) are supported when the package was
+#'  installed with libcurl available.
+#'
+#' @return A named list with elements `version`, `n_chroms`, `field_count`,
+#'  `defined_field_count`, `n_bases_covered`, and `autosql` (the embedded
+#'  autoSql schema string, or `""` when the file has none).
+#'
+#' @seealso [read_bigbed()], [bigwig_info()]
+#'
+#' @examples
+#' bb <- system.file("extdata", "test.bb", package = "cpp11bigwig")
+#'
+#' info <- bigbed_info(bb)
+#' info$defined_field_count
+#'
+#' @export
+bigbed_info <- function(bbfile) {
+  check_bigwig_file(bbfile)
+  bigbed_info_cpp(bbfile)
+}
+
+#' Report header metadata and summary statistics for a bigWig file.
+#'
+#' Reads the bigWig header without loading any intervals. The summary
+#' statistics (`min`, `max`, `mean`, `std`) are the file-level values stored in
+#' the header and computed over all covered bases.
+#'
+#' @param bwfile path or URL for a bigWig file. Remote files
+#'  (`http://`, `https://`, `ftp://`) are supported when the package was
+#'  installed with libcurl available.
+#'
+#' @return A named list with elements `version`, `n_levels`, `n_chroms`,
+#'  `n_bases_covered`, `min`, `max`, `mean`, and `std`.
+#'
+#' @seealso [read_bigwig()], [bigbed_info()]
+#'
+#' @examples
+#' bw <- system.file("extdata", "test.bw", package = "cpp11bigwig")
+#'
+#' bigwig_info(bw)
+#'
+#' @export
+bigwig_info <- function(bwfile) {
+  check_bigwig_file(bwfile)
+  bigwig_info_cpp(bwfile)
+}

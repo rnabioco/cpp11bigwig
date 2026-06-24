@@ -1,5 +1,12 @@
 # cpp11bigwig (development version)
 
+* New `bigbed_info()` and `bigwig_info()` report header metadata without reading
+  any intervals. `bigbed_info()` returns the field counts and embedded autoSql
+  schema, making it possible to identify the BED variant a file holds before
+  reading it (a genuine BED12 has `defined_field_count == 12`). `bigwig_info()`
+  returns the version, zoom levels, chromosome count, and file-level summary
+  statistics (`min`/`max`/`mean`/`std`).
+
 * `read_bigbed()` now returns all BED columns for files with no embedded autoSql
   schema (e.g. a bed12 written by `bedToBigBed` without `-as`). Previously such
   files returned only `chrom`/`start`/`end`; the reader now falls back to the

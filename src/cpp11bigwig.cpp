@@ -3,6 +3,7 @@
 
 using namespace cpp11;
 
+#include <cmath>
 #include <sstream>
 #include <vector>
 
@@ -417,6 +418,121 @@ std::string bigbed_sql_cpp(std::string bbfname) {
   bwCleanup();
 
   return (sql_str);
+}
+
+// Report header metadata for a bigBed file. `field_count` is the total number of
+// columns and `defined_field_count` is how many of the fixed-format BED columns
+// are present (3-12) -- the authoritative way to identify the BED variant (e.g.
+// `defined_field_count == 12` is a genuine BED12). `autosql` is the embedded
+// schema string (empty when the file has none).
+[[cpp11::register]]
+writable::list bigbed_info_cpp(std::string bbfname) {
+  const char* bbfile = bbfname.c_str();
+
+  // initialize libBigWig (allocates the read buffer required for remote files)
+  if (bwInit(1 << 17) != 0)
+    stop("Failed to initialize libBigWig\n");
+
+  // verify the bigBed magic number up front (bbOpen() is permissive about type)
+  if (bbIsBigBed(bbfile, NULL) != 1) {
+    bwCleanup();
+    stop("Not a bigBed file: '%s'\n", bbfname.c_str());
+  }
+
+  // NULL can be a CURL callback. see libBigWig demos
+  bigWigFile_t* bbf = bbOpen(bbfile, NULL);
+
+  if (!bbf) {
+    bwCleanup();
+    stop("Failed to open file: '%s'\n", bbfname.c_str());
+  }
+
+  char* sql = bbGetSQL(bbf);
+  std::string sql_str(sql ? sql : "");
+  free(sql);
+
+  writable::list out;
+  writable::strings nms;
+
+  out.push_back(writable::integers({static_cast<int>(bbf->hdr->version)}));
+  nms.push_back("version");
+  out.push_back(writable::integers({static_cast<int>(bbf->cl->nKeys)}));
+  nms.push_back("n_chroms");
+  out.push_back(writable::integers({static_cast<int>(bbf->hdr->fieldCount)}));
+  nms.push_back("field_count");
+  out.push_back(writable::integers({static_cast<int>(bbf->hdr->definedFieldCount)}));
+  nms.push_back("defined_field_count");
+  out.push_back(writable::doubles({static_cast<double>(bbf->hdr->nBasesCovered)}));
+  nms.push_back("n_bases_covered");
+  out.push_back(writable::strings({sql_str}));
+  nms.push_back("autosql");
+
+  out.attr("names") = nms;
+
+  bwClose(bbf);
+  bwCleanup();
+
+  return out;
+}
+
+// Report header metadata and summary statistics for a bigWig file.
+[[cpp11::register]]
+writable::list bigwig_info_cpp(std::string bwfname) {
+  const char* bwfile = bwfname.c_str();
+
+  // initialize libBigWig (allocates the read buffer required for remote files)
+  if (bwInit(1 << 17) != 0)
+    stop("Failed to initialize libBigWig\n");
+
+  // verify the bigWig magic number up front (bwOpen() is permissive about type)
+  if (bwIsBigWig(bwfile, NULL) != 1) {
+    bwCleanup();
+    stop("Not a bigWig file: '%s'\n", bwfname.c_str());
+  }
+
+  // NULL can be a CURL callback. see libBigWig demos
+  bigWigFile_t* bw = bwOpen(bwfile, NULL, "r");
+
+  if (!bw) {
+    bwCleanup();
+    stop("Failed to open file: '%s'\n", bwfname.c_str());
+  }
+
+  // file-level summary stats live in the header; derive mean/std from the sums
+  double nbases = static_cast<double>(bw->hdr->nBasesCovered);
+  double mean = nbases > 0 ? bw->hdr->sumData / nbases : NA_REAL;
+  double sd = NA_REAL;
+  if (nbases > 0) {
+    double var = (bw->hdr->sumSquared - bw->hdr->sumData * bw->hdr->sumData / nbases) / nbases;
+    sd = var > 0 ? std::sqrt(var) : 0.0;
+  }
+
+  writable::list out;
+  writable::strings nms;
+
+  out.push_back(writable::integers({static_cast<int>(bw->hdr->version)}));
+  nms.push_back("version");
+  out.push_back(writable::integers({static_cast<int>(bw->hdr->nLevels)}));
+  nms.push_back("n_levels");
+  out.push_back(writable::integers({static_cast<int>(bw->cl->nKeys)}));
+  nms.push_back("n_chroms");
+  out.push_back(writable::doubles({nbases}));
+  nms.push_back("n_bases_covered");
+  out.push_back(writable::doubles({bw->hdr->minVal}));
+  nms.push_back("min");
+  out.push_back(writable::doubles({bw->hdr->maxVal}));
+  nms.push_back("max");
+  out.push_back(writable::doubles({mean}));
+  nms.push_back("mean");
+  out.push_back(writable::doubles({sd}));
+  nms.push_back("std");
+
+  out.attr("names") = nms;
+
+  bwClose(bw);
+  bwCleanup();
+
+  return out;
 }
 
 // Report whether this build was compiled with libcurl (remote file) support.
