@@ -40,7 +40,9 @@ using the standard BED field names (\code{name}, \code{score}, \code{strand},
 \code{thickStart}, \code{thickEnd}, \code{itemRgb}, \code{blockCount}, \code{blockSizes},
 \code{blockStarts}) derived from the file's field counts. Any additional
 (bedN+) fields beyond the standard BED columns are returned as
-generic \code{fieldN} character columns.
+generic \code{fieldN} character columns. Because those names are inferred
+rather than declared by the file, a \code{message()} is emitted in this
+case; silence it with \code{\link[base:suppressMessages]{base::suppressMessages()}}.
 }
 \examples{
 bb <- system.file("extdata", "test.bb", package = "cpp11bigwig")

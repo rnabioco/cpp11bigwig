@@ -326,7 +326,9 @@ as_rle <- function(x, start, end, fill) {
 #' `thickStart`, `thickEnd`, `itemRgb`, `blockCount`, `blockSizes`,
 #' `blockStarts`) derived from the file's field counts. Any additional
 #' (bedN+) fields beyond the standard BED columns are returned as
-#' generic `fieldN` character columns.
+#' generic `fieldN` character columns. Because those names are inferred
+#' rather than declared by the file, a `message()` is emitted in this
+#' case; silence it with [base::suppressMessages()].
 #'
 #' @param bbfile path or URL for a bigBed file. Remote files
 #'  (`http://`, `https://`, `ftp://`) are supported when the package was
@@ -383,6 +385,18 @@ read_bigbed <- function(
 
   # one C++ call opens the file once and returns a per-range list of frames
   reslist <- read_ranges(read_bigbed_cpp, bbfile, ranges)
+
+  # the C++ reader flags whether the file carried an embedded autoSql schema;
+  # when it didn't, the column names came from the standard-BED fallback rather
+  # than the file, so let the user know (read before rbind drops the attribute)
+  if (isFALSE(attr(reslist, "has_autosql"))) {
+    message(
+      "'", bbfile, "' has no embedded autoSql schema; column names were ",
+      "assigned from standard BED conventions and any extra (bedN+) fields ",
+      "are returned as character `fieldN` columns."
+    )
+  }
+
   as_tibble(do.call(rbind, reslist))
 }
 

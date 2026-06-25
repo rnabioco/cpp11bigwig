@@ -322,7 +322,7 @@ test_that("read_bigbed handles a bigBed with no embedded autoSql schema", {
   # R. test_noschema.bb is a bed3 file with its header sqlOffset zeroed.
   bb <- test_path("data/test_noschema.bb")
 
-  res <- read_bigbed(bb)
+  res <- suppressMessages(read_bigbed(bb))
   expect_s3_class(res, "tbl_df")
   # with no schema there are no extra typed fields: just chrom/start/end
   expect_equal(names(res), c("chrom", "start", "end"))
@@ -330,7 +330,7 @@ test_that("read_bigbed handles a bigBed with no embedded autoSql schema", {
   expect_true(all(res$end > res$start))
 
   # windowed / per-chrom queries still work without a schema
-  chr1 <- read_bigbed(bb, chrom = "chr1")
+  chr1 <- suppressMessages(read_bigbed(bb, chrom = "chr1"))
   expect_true(all(chr1$chrom == "chr1"))
 })
 
@@ -343,7 +343,7 @@ test_that("read_bigbed recovers BED columns for a schema-less bed12", {
   noschema <- test_path("data/test_noschema_bed12.bb")
   schema <- test_path("data/test.bb")
 
-  res <- read_bigbed(noschema)
+  res <- suppressMessages(read_bigbed(noschema))
   expect_s3_class(res, "tbl_df")
   expect_equal(ncol(res), 12)
   expect_equal(
@@ -360,6 +360,20 @@ test_that("read_bigbed recovers BED columns for a schema-less bed12", {
   ref <- read_bigbed(schema)
   expect_equal(nrow(res), nrow(ref))
   expect_equal(unname(as.list(res)), unname(as.list(ref)))
+})
+
+test_that("read_bigbed messages when a bigBed has no autoSql, stays silent otherwise", {
+  # column names for a schema-less file are inferred, so the user is told
+  expect_message(
+    read_bigbed(test_path("data/test_noschema_bed12.bb")),
+    "autoSql"
+  )
+  expect_message(
+    read_bigbed(test_path("data/test_noschema.bb")),
+    "autoSql"
+  )
+  # a schema-backed file declares its own names: no message
+  expect_no_message(read_bigbed(test_path("data/test.bb")))
 })
 
 test_that("read_bigbed coerces columns based on autoSql types", {

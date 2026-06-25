@@ -12,7 +12,9 @@
   files returned only `chrom`/`start`/`end`; the reader now falls back to the
   field counts in the file header and names columns with the standard BED field
   names (any extra bedN+ fields become generic `fieldN` character columns)
-  (#18).
+  (#18). When a file has no embedded schema, `read_bigbed()` now emits a
+  `message()` noting that the column names were inferred rather than declared
+  by the file; silence it with `suppressMessages()`.
 
 # cpp11bigwig 0.3.0
 

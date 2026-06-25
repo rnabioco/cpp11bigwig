@@ -73,7 +73,10 @@ std::vector<std::pair<std::string, std::string>> parse_autosql(const std::string
 // Canonical UCSC BED fields (chrom, chromStart, chromEnd, then the bed4..bed12
 // columns), used as a fallback when a bigBed has no embedded autoSql schema.
 // Mirrors the standard bed12 autoSql so a schema-less file reads the same as one
-// encoded with `-as=bed12.as`. Sized to the file header's field counts:
+// encoded with `-as=bed12.as`. This naming is a cpp11bigwig convenience: UCSC's
+// `bigBedToBed -header`/`-tsv` instead aborts when a file has no autoSql rather
+// than inferring names, so read_bigbed() emits a message in that case. Sized to
+// the file header's field counts:
 // `field_count` is the total number of columns and `defined_field_count` is how
 // many of the fixed-format BED fields are present (3-12); any field beyond that
 // is a bedN+ extra column of unknown type and falls back to a generic string.
@@ -393,6 +396,13 @@ writable::list read_bigbed_cpp(std::string bbfname, strings chroms_r, integers s
 
   bwClose(bbf);
   bwCleanup();
+
+  // Signal whether the file carried an embedded autoSql schema. sql_str is ""
+  // exactly when bbGetSQL() returned NULL (no schema), in which case the column
+  // names above came from the default_bed_fields() fallback rather than the
+  // file. read_bigbed() reads this off the returned list to emit a one-time
+  // message; it rides as an attribute so the C++ signature stays unchanged.
+  out.attr("has_autosql") = writable::logicals({r_bool(!sql_str.empty())});
 
   return out;
 }
