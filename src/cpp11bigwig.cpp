@@ -127,7 +127,8 @@ writable::list read_bigwig_cpp(std::string bwfname, strings chroms_r, integers s
   if (bwInit(1 << 17) != 0)
     stop("Failed to initialize libBigWig\n");
 
-  // NULL can be a CURL callback. see libBigWig demos
+  // 2nd arg is an optional curl-options callback; NULL uses libBigWig's
+  // defaults. Remote (http/https/ftp) URLs still work — see libBigWig demos.
   bwf = bwOpen(bwfile, NULL, "r");
 
   if (!bwf) {
@@ -220,7 +221,8 @@ writable::list read_bigbed_cpp(std::string bbfname, strings chroms_r, integers s
   if (bwInit(1 << 17) != 0)
     stop("Failed to initialize libBigWig\n");
 
-  // NULL can be a CURL callback. see libBigWig demos
+  // 2nd arg is an optional curl-options callback; NULL uses libBigWig's
+  // defaults. Remote (http/https/ftp) URLs still work — see libBigWig demos.
   bbf = bbOpen(bbfile, NULL);
 
   if (!bbf) {
@@ -400,7 +402,8 @@ std::string bigbed_sql_cpp(std::string bbfname) {
   if (bwInit(1 << 17) != 0)
     stop("Failed to initialize libBigWig\n");
 
-  // NULL can be a CURL callback. see libBigWig demos
+  // 2nd arg is an optional curl-options callback; NULL uses libBigWig's
+  // defaults. Remote (http/https/ftp) URLs still work — see libBigWig demos.
   bbf = bbOpen(bbfile, NULL);
 
   if (!bbf) {
@@ -439,7 +442,8 @@ writable::list bigbed_info_cpp(std::string bbfname) {
     stop("Not a bigBed file: '%s'\n", bbfname.c_str());
   }
 
-  // NULL can be a CURL callback. see libBigWig demos
+  // 2nd arg is an optional curl-options callback; NULL uses libBigWig's
+  // defaults. Remote (http/https/ftp) URLs still work — see libBigWig demos.
   bigWigFile_t* bbf = bbOpen(bbfile, NULL);
 
   if (!bbf) {
@@ -490,7 +494,8 @@ writable::list bigwig_info_cpp(std::string bwfname) {
     stop("Not a bigWig file: '%s'\n", bwfname.c_str());
   }
 
-  // NULL can be a CURL callback. see libBigWig demos
+  // 2nd arg is an optional curl-options callback; NULL uses libBigWig's
+  // defaults. Remote (http/https/ftp) URLs still work — see libBigWig demos.
   bigWigFile_t* bw = bwOpen(bwfile, NULL, "r");
 
   if (!bw) {

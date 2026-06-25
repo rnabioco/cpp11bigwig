@@ -221,6 +221,42 @@ test_that("remote bigWig larger than the read buffer reads a windowed range (#18
   expect_equal(remote$value[1], 40)
 })
 
+test_that("remote bigwig_info matches local", {
+  skip_on_cran()
+  skip_if_not(bigwig_has_curl_cpp(), "built without libcurl")
+
+  url <- paste0(
+    "https://raw.githubusercontent.com/rnabioco/cpp11bigwig/",
+    "main/inst/extdata/test.bw"
+  )
+  local <- bigwig_info(system.file("extdata", "test.bw", package = "cpp11bigwig"))
+  # a network/remote-host failure should skip, not fail the suite
+  remote <- tryCatch(
+    bigwig_info(url),
+    error = function(e) skip(paste("remote fetch unavailable:", conditionMessage(e)))
+  )
+
+  expect_equal(remote, local)
+})
+
+test_that("remote bigbed_info matches local", {
+  skip_on_cran()
+  skip_if_not(bigwig_has_curl_cpp(), "built without libcurl")
+
+  url <- paste0(
+    "https://raw.githubusercontent.com/rnabioco/cpp11bigwig/",
+    "main/inst/extdata/test.bb"
+  )
+  local <- bigbed_info(system.file("extdata", "test.bb", package = "cpp11bigwig"))
+  # a network/remote-host failure should skip, not fail the suite
+  remote <- tryCatch(
+    bigbed_info(url),
+    error = function(e) skip(paste("remote fetch unavailable:", conditionMessage(e)))
+  )
+
+  expect_equal(remote, local)
+})
+
 test_that("read_bigbed correctly parses interval coordinates", {
   # Test with the sample bigBed file
   bb_file <- test_path("data/test.bb")
