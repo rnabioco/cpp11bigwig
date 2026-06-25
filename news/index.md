@@ -22,7 +22,13 @@
   to the field counts in the file header and names columns with the
   standard BED field names (any extra bedN+ fields become generic
   `fieldN` character columns)
-  ([\#18](https://github.com/rnabioco/cpp11bigwig/issues/18)).
+  ([\#18](https://github.com/rnabioco/cpp11bigwig/issues/18)). When a
+  file has no embedded schema,
+  [`read_bigbed()`](https://rnabioco.github.io/cpp11bigwig/reference/read_bigbed.md)
+  now emits a [`message()`](https://rdrr.io/r/base/message.html) noting
+  that the column names were inferred rather than declared by the file;
+  silence it with
+  [`suppressMessages()`](https://rdrr.io/r/base/message.html).
 
 ## cpp11bigwig 0.3.0
 

@@ -100,7 +100,9 @@ using the standard BED field names (<code>name</code>, <code>score</code>, <code
 <code>thickStart</code>, <code>thickEnd</code>, <code>itemRgb</code>, <code>blockCount</code>, <code>blockSizes</code>,
 <code>blockStarts</code>) derived from the file's field counts. Any additional
 (bedN+) fields beyond the standard BED columns are returned as
-generic <code>fieldN</code> character columns.</p>
+generic <code>fieldN</code> character columns. Because those names are inferred
+rather than declared by the file, a <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code> is emitted in this
+case; silence it with <code><a href="https://rdrr.io/r/base/message.html" class="external-link">base::suppressMessages()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
