@@ -8,6 +8,11 @@ using namespace cpp11;
 #include <vector>
 
 #include "libBigWig/bigWig.h"
+// bwCommon.h (bwSetPos/bwRead, used to verify file magic) lacks extern "C"
+// guards, so declare its symbols with C linkage to match the C library.
+extern "C" {
+#include "libBigWig/bwCommon.h"
+}
 
 // R type categories for autoSql types
 enum class RType { Integer, Double, String };
@@ -436,12 +441,6 @@ writable::list bigbed_info_cpp(std::string bbfname) {
   if (bwInit(1 << 17) != 0)
     stop("Failed to initialize libBigWig\n");
 
-  // verify the bigBed magic number up front (bbOpen() is permissive about type)
-  if (bbIsBigBed(bbfile, NULL) != 1) {
-    bwCleanup();
-    stop("Not a bigBed file: '%s'\n", bbfname.c_str());
-  }
-
   // 2nd arg is an optional curl-options callback; NULL uses libBigWig's
   // defaults. Remote (http/https/ftp) URLs still work — see libBigWig demos.
   bigWigFile_t* bbf = bbOpen(bbfile, NULL);
@@ -449,6 +448,16 @@ writable::list bigbed_info_cpp(std::string bbfname) {
   if (!bbf) {
     bwCleanup();
     stop("Failed to open file: '%s'\n", bbfname.c_str());
+  }
+
+  // bbOpen() accepts either magic, so verify the file is really a bigBed by
+  // re-reading the magic from the open handle (avoids a second remote open)
+  uint32_t magic = 0;
+  if (bwSetPos(bbf, 0) != 0 || bwRead(&magic, sizeof(uint32_t), 1, bbf) != 1 ||
+      magic != BIGBED_MAGIC) {
+    bwClose(bbf);
+    bwCleanup();
+    stop("Not a bigBed file: '%s'\n", bbfname.c_str());
   }
 
   char* sql = bbGetSQL(bbf);
@@ -488,12 +497,6 @@ writable::list bigwig_info_cpp(std::string bwfname) {
   if (bwInit(1 << 17) != 0)
     stop("Failed to initialize libBigWig\n");
 
-  // verify the bigWig magic number up front (bwOpen() is permissive about type)
-  if (bwIsBigWig(bwfile, NULL) != 1) {
-    bwCleanup();
-    stop("Not a bigWig file: '%s'\n", bwfname.c_str());
-  }
-
   // 2nd arg is an optional curl-options callback; NULL uses libBigWig's
   // defaults. Remote (http/https/ftp) URLs still work — see libBigWig demos.
   bigWigFile_t* bw = bwOpen(bwfile, NULL, "r");
@@ -501,6 +504,16 @@ writable::list bigwig_info_cpp(std::string bwfname) {
   if (!bw) {
     bwCleanup();
     stop("Failed to open file: '%s'\n", bwfname.c_str());
+  }
+
+  // bwOpen() accepts either magic, so verify the file is really a bigWig by
+  // re-reading the magic from the open handle (avoids a second remote open)
+  uint32_t magic = 0;
+  if (bwSetPos(bw, 0) != 0 || bwRead(&magic, sizeof(uint32_t), 1, bw) != 1 ||
+      magic != BIGWIG_MAGIC) {
+    bwClose(bw);
+    bwCleanup();
+    stop("Not a bigWig file: '%s'\n", bwfname.c_str());
   }
 
   // file-level summary stats live in the header; derive mean/std from the sums
