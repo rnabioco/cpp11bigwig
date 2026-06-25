@@ -1,4 +1,4 @@
-# cpp11bigwig (development version)
+# cpp11bigwig 0.3.1
 
 * New `bigbed_info()` and `bigwig_info()` report header metadata without reading
   any intervals. `bigbed_info()` returns the field counts and embedded autoSql
